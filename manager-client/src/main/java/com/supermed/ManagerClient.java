@@ -10,11 +10,14 @@ public class ManagerClient extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/main_view.fxml"));
+        // Загружаем экран входа вместо главного окна
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/login_view.fxml"));
         Parent root = loader.load();
 
-        primaryStage.setTitle("SuperMed - Панель менеджера");
-        primaryStage.setScene(new Scene(root, 800, 600));
+        primaryStage.setTitle("SuperMed - Вход в систему");
+        primaryStage.setScene(new Scene(root, 500, 700));
+        primaryStage.setMinWidth(450);
+        primaryStage.setMinHeight(600);
         primaryStage.show();
     }
 

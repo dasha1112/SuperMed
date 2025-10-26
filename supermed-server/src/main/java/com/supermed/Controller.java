@@ -10,19 +10,38 @@ public class Controller {
     private static final Model model = new Model();
 
     public static void initRoutes() {
-        // Получить всех врачей
+        // Endpoint'ы аутентификации
+        post("/auth/login", (req, res) -> {
+            AuthRequest authRequest = gson.fromJson(req.body(), AuthRequest.class);
+            AuthResponse response = model.loginUser(
+                    authRequest.getUsername(),
+                    authRequest.getPassword(),
+                    authRequest.getUserType()
+            );
+            return gson.toJson(response);
+        });
+
+        post("/auth/register", (req, res) -> {
+            RegisterRequest registerRequest = gson.fromJson(req.body(), RegisterRequest.class);
+            AuthResponse response = model.registerUser(
+                    registerRequest.getUsername(),
+                    registerRequest.getPassword(),
+                    registerRequest.getUserType()
+            );
+            return gson.toJson(response);
+        });
+
+        // Существующие endpoint'ы API
         get("/doctors", (req, res) -> {
             List<Doctor> doctors = model.getAllDoctors();
             return gson.toJson(doctors);
         });
 
-        // Получить все записи
         get("/appointments", (req, res) -> {
             List<Appointment> appointments = model.getAllAppointments();
             return gson.toJson(appointments);
         });
 
-        // Создать новую запись
         post("/appointments", (req, res) -> {
             Appointment newAppointment = gson.fromJson(req.body(), Appointment.class);
             boolean success = model.createAppointment(newAppointment);
@@ -35,7 +54,6 @@ public class Controller {
             }
         });
 
-        // Получить статистику
         get("/statistics", (req, res) -> {
             List<Statistics> stats = model.getStatistics();
             return gson.toJson(stats);

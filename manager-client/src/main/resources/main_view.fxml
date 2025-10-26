@@ -12,7 +12,15 @@
       fx:controller="com.supermed.ManagerController"
       spacing="15.0"
       style="-fx-background-color: linear-gradient(to bottom, #f8f9fa, #e9ecef);">
-
+    <HBox spacing="10.0" alignment="CENTER_LEFT" style="-fx-padding: 0 0 10 0;">
+        <Label fx:id="userInfoLabel"
+               text="Пользователь: Не авторизован"
+               style="-fx-text-fill: #7f8c8d; -fx-font-weight: bold;"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="🚪 Выход"
+                onAction="#handleLogout"
+                style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 5 10;"/>
+    </HBox>
     <padding>
         <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
     </padding>

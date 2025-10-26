@@ -7,9 +7,87 @@ import java.util.List;
 
 public class Model {
 
+    // Методы аутентификации
+    public AuthResponse loginUser(String username, String password, String userType) {
+        String hashedPassword = DatabaseManager.hashPassword(password);
+        String sql = "SELECT id, username, user_type, created_at FROM users WHERE username = ? AND password = ? AND user_type = ?";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, username);
+            pstmt.setString(2, hashedPassword);
+            pstmt.setString(3, userType);
+
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                User user = new User(
+                        rs.getInt("id"),
+                        rs.getString("username"),
+                        rs.getString("user_type"),
+                        rs.getString("created_at")
+                );
+                return new AuthResponse(true, "Вход выполнен успешно", user);
+            } else {
+                return new AuthResponse(false, "Неверное имя пользователя, пароль или тип пользователя");
+            }
+        } catch (SQLException e) {
+            System.err.println("Ошибка при входе пользователя: " + e.getMessage());
+            return new AuthResponse(false, "Ошибка сервера при входе");
+        }
+    }
+
+    public AuthResponse registerUser(String username, String password, String userType) {
+        // Проверяем, не занято ли имя пользователя
+        if (isUsernameTaken(username)) {
+            return new AuthResponse(false, "Имя пользователя уже занято");
+        }
+
+        String hashedPassword = DatabaseManager.hashPassword(password);
+        String sql = "INSERT INTO users (username, password, user_type, created_at) VALUES (?, ?, ?, datetime('now'))";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, username);
+            pstmt.setString(2, hashedPassword);
+            pstmt.setString(3, userType);
+
+            int affectedRows = pstmt.executeUpdate();
+
+            if (affectedRows > 0) {
+                // Получаем созданного пользователя
+                return loginUser(username, password, userType);
+            } else {
+                return new AuthResponse(false, "Ошибка при регистрации пользователя");
+            }
+        } catch (SQLException e) {
+            System.err.println("Ошибка при регистрации пользователя: " + e.getMessage());
+            return new AuthResponse(false, "Ошибка сервера при регистрации");
+        }
+    }
+
+    private boolean isUsernameTaken(String username) {
+        String sql = "SELECT id FROM users WHERE username = ?";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, username);
+            ResultSet rs = pstmt.executeQuery();
+
+            return rs.next();
+        } catch (SQLException e) {
+            System.err.println("Ошибка при проверке имени пользователя: " + e.getMessage());
+            return true; // В случае ошибки считаем имя занятым
+        }
+    }
+
+    // Существующие методы для работы с врачами, расписанием и статистикой...
     public List<Doctor> getAllDoctors() {
         List<Doctor> doctors = new ArrayList<>();
-        String sql = "SELECT * FROM doctors";
+        String sql = "SELECT * FROM doctors ORDER BY name";
 
         try (Connection conn = DatabaseManager.getConnection();
              Statement stmt = conn.createStatement();
@@ -42,7 +120,7 @@ public class Model {
             while (rs.next()) {
                 Appointment appointment = new Appointment(
                         rs.getInt("id"),
-                        rs.getString("patient_name"),
+                        rs.getString("patient_username"),
                         rs.getInt("doctor_id"),
                         rs.getString("appointment_time"),
                         rs.getString("secret_id"),
@@ -57,13 +135,14 @@ public class Model {
         return appointments;
     }
 
+
     public boolean createAppointment(Appointment appointment) {
-        String sql = "INSERT INTO appointments (patient_name, doctor_id, appointment_time, secret_id) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO appointments (patient_username, doctor_id, appointment_time, secret_id) VALUES (?, ?, ?, ?)"; // ИЗМЕНЕНО
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            pstmt.setString(1, appointment.getPatientName());
+            pstmt.setString(1, appointment.getPatientUsername()); // ИЗМЕНЕНО
             pstmt.setInt(2, appointment.getDoctorId());
             pstmt.setString(3, appointment.getAppointmentTime());
             pstmt.setString(4, appointment.getSecretId());
@@ -73,6 +152,37 @@ public class Model {
             System.err.println("Ошибка при создании записи: " + e.getMessage());
             return false;
         }
+    }
+
+    public List<Appointment> getPatientAppointments(String username) {
+        List<Appointment> appointments = new ArrayList<>();
+        String sql = "SELECT a.*, d.name as doctor_name FROM appointments a " +
+                "JOIN doctors d ON a.doctor_id = d.id " +
+                "WHERE a.patient_username = ? " +
+                "ORDER BY a.appointment_time DESC";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, username);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Appointment appointment = new Appointment(
+                        rs.getInt("id"),
+                        rs.getString("patient_username"),
+                        rs.getInt("doctor_id"),
+                        rs.getString("appointment_time"),
+                        rs.getString("secret_id"),
+                        rs.getString("status"),
+                        rs.getString("doctor_name")
+                );
+                appointments.add(appointment);
+            }
+        } catch (SQLException e) {
+            System.err.println("Ошибка при получении записей пациента: " + e.getMessage());
+        }
+        return appointments;
     }
 
     public List<Statistics> getStatistics() {
@@ -99,7 +209,8 @@ public class Model {
         }
         return stats;
     }
-    // Методы для работы с расписанием
+
+    // Методы для работы с расписанием...
     public List<Schedule> getAllSchedules() {
         List<Schedule> schedules = new ArrayList<>();
         String sql = "SELECT s.*, d.name as doctor_name FROM schedules s " +
@@ -128,9 +239,7 @@ public class Model {
     }
 
     public boolean updateSchedule(Schedule schedule) {
-        // Проверяем, что рабочий день не превышает 8 часов
         if (schedule.getWorkingHours() > 8) {
-            System.err.println("Ошибка: рабочий день не может превышать 8 часов");
             return false;
         }
 
@@ -151,9 +260,7 @@ public class Model {
     }
 
     public boolean addSchedule(Schedule schedule) {
-        // Проверяем, что рабочий день не превышает 8 часов
         if (schedule.getWorkingHours() > 8) {
-            System.err.println("Ошибка: рабочий день не может превышать 8 часов");
             return false;
         }
 

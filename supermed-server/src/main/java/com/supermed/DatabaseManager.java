@@ -1,6 +1,8 @@
 package com.supermed;
 
 import java.sql.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 public class DatabaseManager {
     private static final String DB_URL = "jdbc:sqlite:supermed.db";
@@ -10,43 +12,71 @@ public class DatabaseManager {
             if (conn != null) {
                 Statement stmt = conn.createStatement();
 
-                // Таблица врачей (обновляем - добавляем филиал)
+                // Таблица пользователей
+                String sqlUsers = "CREATE TABLE IF NOT EXISTS users (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        "username TEXT UNIQUE NOT NULL, " +
+                        "password TEXT NOT NULL, " +
+                        "user_type TEXT NOT NULL, " + // MANAGER, DOCTOR, PATIENT
+                        "created_at TEXT NOT NULL);";
+
+                // Таблица врачей
                 String sqlDoctors = "CREATE TABLE IF NOT EXISTS doctors (" +
                         "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                         "name TEXT NOT NULL, " +
                         "specialization TEXT NOT NULL, " +
                         "branch TEXT NOT NULL);";
 
-                // Таблица записей
+                // Таблица записей - ИЗМЕНЯЕМ: patient_name -> patient_username
                 String sqlAppointments = "CREATE TABLE IF NOT EXISTS appointments (" +
                         "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                        "patient_name TEXT NOT NULL, " +
+                        "patient_username TEXT NOT NULL, " + // ТЕПЕРЬ ХРАНИМ НИКНЕЙМ
                         "doctor_id INTEGER NOT NULL, " +
                         "appointment_time TEXT NOT NULL, " +
                         "secret_id TEXT NOT NULL, " +
                         "status TEXT NOT NULL DEFAULT 'scheduled', " +
                         "FOREIGN KEY(doctor_id) REFERENCES doctors(id));";
 
-                // Новая таблица расписания
+                // Таблица расписания
                 String sqlSchedules = "CREATE TABLE IF NOT EXISTS schedules (" +
                         "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                         "doctor_id INTEGER NOT NULL, " +
-                        "day_of_week TEXT NOT NULL, " + // MONDAY, TUESDAY, etc.
-                        "start_time TEXT NOT NULL, " + // HH:MM
-                        "end_time TEXT NOT NULL, " +   // HH:MM
+                        "day_of_week TEXT NOT NULL, " +
+                        "start_time TEXT NOT NULL, " +
+                        "end_time TEXT NOT NULL, " +
                         "FOREIGN KEY(doctor_id) REFERENCES doctors(id));";
 
+                stmt.execute(sqlUsers);
                 stmt.execute(sqlDoctors);
                 stmt.execute(sqlAppointments);
                 stmt.execute(sqlSchedules);
 
                 // Тестовые данные
-                ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM doctors");
+                ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM users");
                 if (rs.getInt(1) == 0) {
+                    // Создаем тестового менеджера
+                    String managerPassword = hashPassword("manager123");
+                    stmt.execute("INSERT INTO users (username, password, user_type, created_at) VALUES " +
+                            "('m.shemelova', '" + managerPassword + "', 'MANAGER', datetime('now'))");
+
+                    // Создаем тестового врача
+                    String doctorPassword = hashPassword("doctor123");
+                    stmt.execute("INSERT INTO users (username, password, user_type, created_at) VALUES " +
+                            "('d.ivanov', '" + doctorPassword + "', 'DOCTOR', datetime('now'))");
+
+                    // Создаем тестовых пациентов
+                    String patientPassword = hashPassword("patient123");
+                    stmt.execute("INSERT INTO users (username, password, user_type, created_at) VALUES " +
+                            "('p.kotova', '" + patientPassword + "', 'PATIENT', datetime('now')), " +
+                            "('m.maskov', '" + patientPassword + "', 'PATIENT', datetime('now')), " +
+                            "('a.smirnova', '" + patientPassword + "', 'PATIENT', datetime('now')), " +
+                            "('v.petrov', '" + patientPassword + "', 'PATIENT', datetime('now'))");
+
+                    // Тестовые врачи
                     stmt.execute("INSERT INTO doctors (name, specialization, branch) VALUES " +
-                            "('Сергей Александрович Иванов', 'Кардиолог', 'Центральный филиал'), " +
-                            "('Мария Михайловна Петрова', 'Невролог', 'Северный филиал'), " +
-                            "('Алексей Васильевич Сидоров', 'Терапевт', 'Южный филиал')");
+                            "('Иванов Иван Алексеевич', 'Кардиолог', 'Центральный филиал'), " +
+                            "('Петрова Елена Васильевна', 'Невролог', 'Северный филиал'), " +
+                            "('Сидоров Александр Викторович', 'Терапевт', 'Южный филиал')");
 
                     // Тестовое расписание
                     stmt.execute("INSERT INTO schedules (doctor_id, day_of_week, start_time, end_time) VALUES " +
@@ -55,6 +85,24 @@ public class DatabaseManager {
                             "(2, 'TUESDAY', '10:00', '18:00'), " +
                             "(2, 'THURSDAY', '10:00', '18:00'), " +
                             "(3, 'FRIDAY', '08:00', '16:00')");
+
+                    // ТЕСТОВЫЕ ЗАПИСИ К ВРАЧАМ (ИСПОЛЬЗУЕМ НИКНЕЙМЫ)
+                    stmt.execute("INSERT INTO appointments (patient_username, doctor_id, appointment_time, secret_id, status) VALUES " +
+                            "('p.kotova', 1, '2024-01-15 10:00:00', 'SEC001', 'completed'), " +
+                            "('m.maskov', 1, '2024-01-15 11:30:00', 'SEC002', 'completed'), " +
+                            "('a.smirnova', 1, '2024-01-17 14:00:00', 'SEC003', 'scheduled'), " +
+                            "('v.petrov', 1, '2024-01-17 15:30:00', 'SEC004', 'scheduled'), " +
+                            "('p.kotova', 2, '2024-01-16 10:00:00', 'SEC005', 'completed'), " +
+                            "('m.maskov', 2, '2024-01-16 12:00:00', 'SEC006', 'cancelled'), " +
+                            "('a.smirnova', 2, '2024-01-18 14:30:00', 'SEC007', 'scheduled'), " +
+                            "('v.petrov', 2, '2024-01-18 16:00:00', 'SEC008', 'scheduled'), " +
+                            "('p.kotova', 3, '2024-01-19 09:00:00', 'SEC009', 'scheduled'), " +
+                            "('m.maskov', 3, '2024-01-19 10:30:00', 'SEC010', 'scheduled'), " +
+                            "('a.smirnova', 3, '2024-01-19 12:00:00', 'SEC011', 'scheduled'), " +
+                            "('v.petrov', 3, '2024-01-19 13:30:00', 'SEC012', 'scheduled'), " +
+                            "('p.kotova', 1, '2024-01-22 09:30:00', 'SEC013', 'scheduled'), " +
+                            "('m.maskov', 2, '2024-01-23 11:00:00', 'SEC014', 'scheduled'), " +
+                            "('a.smirnova', 3, '2024-01-26 14:00:00', 'SEC015', 'scheduled')");
                 }
 
                 System.out.println("База данных инициализирована успешно.");
@@ -66,5 +114,22 @@ public class DatabaseManager {
 
     public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(DB_URL);
+    }
+
+    // Метод для хеширования пароля
+    public static String hashPassword(String password) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(password.getBytes());
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Ошибка хеширования пароля", e);
+        }
     }
 }

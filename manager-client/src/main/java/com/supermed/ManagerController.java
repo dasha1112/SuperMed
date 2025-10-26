@@ -6,12 +6,16 @@ import com.google.gson.reflect.TypeToken;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.geometry.Insets;
+import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -30,7 +34,7 @@ public class ManagerController implements Initializable {
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final Gson gson = new Gson();
 
-    // Элементы для статистики
+    // Элементы интерфейса
     @FXML private TableView<Statistics> statisticsTable;
     @FXML private TableColumn<Statistics, String> colDoctorName;
     @FXML private TableColumn<Statistics, String> colSpecialization;
@@ -39,7 +43,6 @@ public class ManagerController implements Initializable {
     @FXML private Label statsCount;
     @FXML private Button loadStatsBtn;
 
-    // Элементы для расписания
     @FXML private TableView<Schedule> scheduleTable;
     @FXML private TableColumn<Schedule, Integer> colScheduleId;
     @FXML private TableColumn<Schedule, String> colScheduleDoctor;
@@ -52,21 +55,46 @@ public class ManagerController implements Initializable {
     @FXML private Button refreshScheduleBtn;
     @FXML private Button addScheduleBtn;
 
-    // Общие элементы
     @FXML private Label statusLabel;
+    @FXML private Label userInfoLabel;
 
     // Данные для таблиц
     private ObservableList<Statistics> statisticsData = FXCollections.observableArrayList();
     private ObservableList<Schedule> scheduleData = FXCollections.observableArrayList();
     private ObservableList<Doctor> doctorsData = FXCollections.observableArrayList();
 
+    // Текущий пользователь
+    private User currentUser;
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         setupStatisticsTable();
         setupScheduleTable();
         updateStatus("Готов к работе", "success");
-        loadDoctors(); // Загружаем список врачей для диалогов
-        refreshSchedules(); // Автоматически загружаем расписание при старте
+        loadDoctors();
+        refreshSchedules();
+
+        // Показываем информацию о пользователе
+        if (currentUser != null) {
+            userInfoLabel.setText("Пользователь: " + currentUser.getUsername() + " (" + getUserTypeDisplayName(currentUser.getUserType()) + ")");
+        }
+    }
+
+    // Метод для установки текущего пользователя (вызывается из LoginController)
+    public void setCurrentUser(User user) {
+        this.currentUser = user;
+        if (userInfoLabel != null && user != null) {
+            userInfoLabel.setText("Пользователь: " + user.getUsername() + " (" + getUserTypeDisplayName(user.getUserType()) + ")");
+        }
+    }
+
+    private String getUserTypeDisplayName(String userType) {
+        switch (userType) {
+            case "MANAGER": return "Менеджер";
+            case "DOCTOR": return "Врач";
+            case "PATIENT": return "Пациент";
+            default: return "Пользователь";
+        }
     }
 
     private void setupStatisticsTable() {
@@ -185,6 +213,12 @@ public class ManagerController implements Initializable {
 
     @FXML
     private void loadStatistics() {
+        // Проверяем права доступа
+        if (currentUser != null && !currentUser.getUserType().equals("MANAGER")) {
+            showAlert("Ошибка доступа", "Только менеджеры могут просматривать статистику", "ERROR");
+            return;
+        }
+
         updateStatus("Загрузка статистики...", "info");
 
         try {
@@ -247,6 +281,12 @@ public class ManagerController implements Initializable {
 
     @FXML
     private void showAddScheduleDialog() {
+        // Проверяем права доступа
+        if (currentUser != null && !currentUser.getUserType().equals("MANAGER")) {
+            showAlert("Ошибка доступа", "Только менеджеры могут управлять расписанием", "ERROR");
+            return;
+        }
+
         Dialog<Schedule> dialog = new Dialog<>();
         dialog.setTitle("Добавление расписания");
         dialog.setHeaderText("Добавьте новое расписание врача");
@@ -331,6 +371,12 @@ public class ManagerController implements Initializable {
     }
 
     private void showEditScheduleDialog(Schedule schedule) {
+        // Проверяем права доступа
+        if (currentUser != null && !currentUser.getUserType().equals("MANAGER")) {
+            showAlert("Ошибка доступа", "Только менеджеры могут управлять расписанием", "ERROR");
+            return;
+        }
+
         Dialog<Schedule> dialog = new Dialog<>();
         dialog.setTitle("Редактирование расписания");
         dialog.setHeaderText("Редактируйте расписание врача");
@@ -432,6 +478,12 @@ public class ManagerController implements Initializable {
     }
 
     private void deleteSchedule(Schedule schedule) {
+        // Проверяем права доступа
+        if (currentUser != null && !currentUser.getUserType().equals("MANAGER")) {
+            showAlert("Ошибка доступа", "Только менеджеры могут управлять расписанием", "ERROR");
+            return;
+        }
+
         Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
         confirmation.setTitle("Подтверждение удаления");
         confirmation.setHeaderText("Удаление расписания");
@@ -463,21 +515,46 @@ public class ManagerController implements Initializable {
         }
     }
 
+    @FXML
+    private void handleLogout() {
+        try {
+            // Закрываем текущее окно
+            Stage currentStage = (Stage) statusLabel.getScene().getWindow();
+
+            // Открываем окно входа
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/login_view.fxml"));
+            Parent root = loader.load();
+
+            Stage loginStage = new Stage();
+            loginStage.setTitle("SuperMed - Вход в систему");
+            loginStage.setScene(new Scene(root, 500, 700));
+            loginStage.setMinWidth(450);
+            loginStage.setMinHeight(600);
+            loginStage.show();
+
+            // Закрываем главное окно
+            currentStage.close();
+
+        } catch (IOException e) {
+            showAlert("Ошибка", "Не удалось выполнить выход", "ERROR");
+        }
+    }
+
     private void updateStatus(String message, String type) {
         if (statusLabel != null) {
             statusLabel.setText(message);
             switch (type) {
                 case "success":
-                    statusLabel.setStyle("-fx-text-fill: #27ae60; -fx-font-size: 11px; -fx-font-weight: bold;");
+                    statusLabel.setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold;");
                     break;
                 case "error":
-                    statusLabel.setStyle("-fx-text-fill: #e74c3c; -fx-font-size: 11px; -fx-font-weight: bold;");
+                    statusLabel.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
                     break;
                 case "info":
-                    statusLabel.setStyle("-fx-text-fill: #3498db; -fx-font-size: 11px; -fx-font-weight: bold;");
+                    statusLabel.setStyle("-fx-text-fill: #3498db; -fx-font-weight: bold;");
                     break;
                 default:
-                    statusLabel.setStyle("-fx-text-fill: #7f8c8d; -fx-font-size: 11px; -fx-font-weight: bold;");
+                    statusLabel.setStyle("-fx-text-fill: #7f8c8d; -fx-font-weight: bold;");
             }
         }
     }
@@ -500,7 +577,6 @@ public class ManagerController implements Initializable {
         alert.setHeaderText(null);
         alert.setContentText(message);
 
-        // Стилизация алерта
         DialogPane dialogPane = alert.getDialogPane();
         dialogPane.setStyle("-fx-background-color: white; -fx-border-color: #bdc3c7; -fx-border-radius: 10; -fx-background-radius: 10;");
 
