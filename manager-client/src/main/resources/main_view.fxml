@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.paint.*?>
+<?import javafx.scene.effect.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17.0.2-ea"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.supermed.ManagerController"
+      spacing="15.0"
+      style="-fx-background-color: linear-gradient(to bottom, #f8f9fa, #e9ecef);">
+
+    <padding>
+        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+    </padding>
+
+    <!-- Заголовок с иконкой -->
+    <HBox spacing="15.0" alignment="CENTER_LEFT">
+        <Label text="🏥" style="-fx-font-size: 28px;"/>
+        <VBox spacing="2.0">
+            <Label text="SuperMed Manager"
+                   style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+            <Label text="Панель управления медицинским учреждением"
+                   style="-fx-font-size: 12px; -fx-text-fill: #7f8c8d;"/>
+        </VBox>
+    </HBox>
+
+    <!-- Основные вкладки -->
+    <TabPane VBox.vgrow="ALWAYS"
+             tabClosingPolicy="UNAVAILABLE"
+             style="-fx-background-color: white; -fx-background-radius: 10; -fx-border-radius: 10;">
+
+        <effect>
+            <DropShadow radius="10.0" color="rgba(0,0,0,0.1)"/>
+        </effect>
+
+        <!-- Вкладка статистики -->
+        <Tab text="📊 Статистика врачей">
+            <content>
+                <VBox spacing="15.0" style="-fx-padding: 20;">
+                    <!-- Панель управления статистикой -->
+                    <HBox spacing="10.0" alignment="CENTER_LEFT">
+                        <Button fx:id="loadStatsBtn"
+                                text="📈 Обновить статистику"
+                                onAction="#loadStatistics"
+                                style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 8 15;"/>
+                        <Label fx:id="statsCount"
+                               text="Врачей в статистике: 0"
+                               style="-fx-text-fill: #7f8c8d; -fx-font-style: italic;"/>
+                    </HBox>
+
+                    <!-- Таблица статистики -->
+                    <TableView fx:id="statisticsTable" VBox.vgrow="ALWAYS"
+                               style="-fx-background-radius: 8; -fx-border-radius: 8; -fx-border-color: #bdc3c7;">
+                        <columns>
+                            <TableColumn fx:id="colDoctorName" text="👨‍⚕️ Врач" prefWidth="180"
+                                         style="-fx-background-color: #ecf0f1; -fx-font-weight: bold;"/>
+                            <TableColumn fx:id="colSpecialization" text="🎯 Специализация" prefWidth="150"/>
+                            <TableColumn fx:id="colBranch" text="🏢 Филиал" prefWidth="150"/>
+                            <TableColumn fx:id="colAppointmentCount" text="📋 Количество записей" prefWidth="150"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+            </content>
+        </Tab>
+
+        <!-- Вкладка расписания -->
+        <Tab text="📅 Управление расписанием">
+            <content>
+                <VBox spacing="15.0" style="-fx-padding: 20;">
+                    <!-- Панель управления расписанием -->
+                    <HBox spacing="10.0" alignment="CENTER_LEFT">
+                        <Button fx:id="refreshScheduleBtn"
+                                text="🔄 Обновить расписание"
+                                onAction="#refreshSchedules"
+                                style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 8 15;"/>
+                        <Button fx:id="addScheduleBtn"
+                                text="➕ Добавить запись"
+                                onAction="#showAddScheduleDialog"
+                                style="-fx-background-color: #9b59b6; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 8 15;"/>
+                        <Label fx:id="scheduleCount"
+                               text="Записей в расписании: 0"
+                               style="-fx-text-fill: #7f8c8d; -fx-font-style: italic;"/>
+                    </HBox>
+
+                    <!-- Таблица расписания -->
+                    <TableView fx:id="scheduleTable" VBox.vgrow="ALWAYS"
+                               style="-fx-background-radius: 8; -fx-border-radius: 8; -fx-border-color: #bdc3c7;">
+                        <columns>
+                            <TableColumn fx:id="colScheduleId" text="ID" prefWidth="50"
+                                         style="-fx-background-color: #ecf0f1; -fx-font-weight: bold;"/>
+                            <TableColumn fx:id="colScheduleDoctor" text="👨‍⚕️ Врач" prefWidth="180"/>
+                            <TableColumn fx:id="colScheduleDay" text="📅 День недели" prefWidth="120"/>
+                            <TableColumn fx:id="colScheduleStart" text="🕐 Начало" prefWidth="100"/>
+                            <TableColumn fx:id="colScheduleEnd" text="🕔 Конец" prefWidth="100"/>
+                            <TableColumn fx:id="colScheduleHours" text="⏱️ Часы" prefWidth="80"/>
+                            <TableColumn fx:id="colScheduleActions" text="⚙️ Действия" prefWidth="150"/>
+                        </columns>
+                    </TableView>
+
+                    <!-- Предупреждение о 8-часовом рабочем дне -->
+                    <HBox spacing="10.0" style="-fx-padding: 10; -fx-background-color: #fff3cd; -fx-background-radius: 8; -fx-border-color: #ffeaa7; -fx-border-radius: 8;">
+                        <Label text="💡" style="-fx-font-size: 16px;"/>
+                        <VBox spacing="2">
+                            <Label text="Важное ограничение:" style="-fx-font-weight: bold; -fx-text-fill: #856404;"/>
+                            <Label text="Рабочий день врача не может превышать 8 часов" style="-fx-text-fill: #856404; -fx-font-size: 11px;"/>
+                        </VBox>
+                    </HBox>
+                </VBox>
+            </content>
+        </Tab>
+
+    </TabPane>
+
+    <!-- Нижний колонтитул -->
+    <HBox spacing="10.0" alignment="CENTER_RIGHT" style="-fx-padding: 10 0 0 0;">
+        <Label text="💚 SuperMed v1.0"
+               style="-fx-text-fill: #95a5a6; -fx-font-size: 11px;"/>
+        <Label fx:id="statusLabel"
+               text="Готов к работе"
+               style="-fx-text-fill: #27ae60; -fx-font-size: 11px; -fx-font-weight: bold;"/>
+    </HBox>
+
+</VBox>
