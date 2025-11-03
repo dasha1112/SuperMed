@@ -4,16 +4,26 @@ public class Doctor {
     private int id;
     private String name;
     private String specialization;
-    private String branch;
+    private int branchId;
+    private String branchName;
+    private String branchAddress;
 
-    // Конструктор по умолчанию (важен для Gson)
     public Doctor() {}
 
-    public Doctor(int id, String name, String specialization, String branch) {
+    public Doctor(int id, String name, String specialization, int branchId) {
         this.id = id;
         this.name = name;
         this.specialization = specialization;
-        this.branch = branch;
+        this.branchId = branchId;
+    }
+
+    public Doctor(int id, String name, String specialization, int branchId, String branchName, String branchAddress) {
+        this.id = id;
+        this.name = name;
+        this.specialization = specialization;
+        this.branchId = branchId;
+        this.branchName = branchName;
+        this.branchAddress = branchAddress;
     }
 
     // Геттеры и сеттеры
@@ -23,6 +33,10 @@ public class Doctor {
     public void setName(String name) { this.name = name; }
     public String getSpecialization() { return specialization; }
     public void setSpecialization(String specialization) { this.specialization = specialization; }
-    public String getBranch() { return branch; }
-    public void setBranch(String branch) { this.branch = branch; }
+    public int getBranchId() { return branchId; }
+    public void setBranchId(int branchId) { this.branchId = branchId; }
+    public String getBranchName() { return branchName; }
+    public void setBranchName(String branchName) { this.branchName = branchName; }
+    public String getBranchAddress() { return branchAddress; }
+    public void setBranchAddress(String branchAddress) { this.branchAddress = branchAddress; }
 }

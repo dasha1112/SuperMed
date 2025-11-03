@@ -17,20 +17,27 @@ public class DatabaseManager {
                         "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                         "username TEXT UNIQUE NOT NULL, " +
                         "password TEXT NOT NULL, " +
-                        "user_type TEXT NOT NULL, " + // MANAGER, DOCTOR, PATIENT
+                        "user_type TEXT NOT NULL, " +
                         "created_at TEXT NOT NULL);";
 
-                // Таблица врачей
+                // ТАБЛИЦА ФИЛИАЛОВ (НОВАЯ)
+                String sqlBranches = "CREATE TABLE IF NOT EXISTS branches (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        "name TEXT NOT NULL, " +
+                        "address TEXT NOT NULL);";
+
+                // Таблица врачей (ОБНОВЛЯЕМ: branch -> branch_id)
                 String sqlDoctors = "CREATE TABLE IF NOT EXISTS doctors (" +
                         "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                         "name TEXT NOT NULL, " +
                         "specialization TEXT NOT NULL, " +
-                        "branch TEXT NOT NULL);";
+                        "branch_id INTEGER NOT NULL, " +
+                        "FOREIGN KEY(branch_id) REFERENCES branches(id));";
 
-                // Таблица записей - ИЗМЕНЯЕМ: patient_name -> patient_username
+                // Таблица записей
                 String sqlAppointments = "CREATE TABLE IF NOT EXISTS appointments (" +
                         "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                        "patient_username TEXT NOT NULL, " + // ТЕПЕРЬ ХРАНИМ НИКНЕЙМ
+                        "patient_username TEXT NOT NULL, " +
                         "doctor_id INTEGER NOT NULL, " +
                         "appointment_time TEXT NOT NULL, " +
                         "secret_id TEXT NOT NULL, " +
@@ -47,6 +54,7 @@ public class DatabaseManager {
                         "FOREIGN KEY(doctor_id) REFERENCES doctors(id));";
 
                 stmt.execute(sqlUsers);
+                stmt.execute(sqlBranches); // НОВАЯ ТАБЛИЦА
                 stmt.execute(sqlDoctors);
                 stmt.execute(sqlAppointments);
                 stmt.execute(sqlSchedules);
@@ -72,21 +80,32 @@ public class DatabaseManager {
                             "('a.smirnova', '" + patientPassword + "', 'PATIENT', datetime('now')), " +
                             "('v.petrov', '" + patientPassword + "', 'PATIENT', datetime('now'))");
 
-                    // Тестовые врачи
-                    stmt.execute("INSERT INTO doctors (name, specialization, branch) VALUES " +
-                            "('Иванов Иван Алексеевич', 'Кардиолог', 'Центральный филиал'), " +
-                            "('Петрова Елена Васильевна', 'Невролог', 'Северный филиал'), " +
-                            "('Сидоров Александр Викторович', 'Терапевт', 'Южный филиал')");
+                    // ТЕСТОВЫЕ ФИЛИАЛЫ
+                    stmt.execute("INSERT INTO branches (name, address) VALUES " +
+                            "('Центральный филиал', 'г. Нижний Новогород, ул. Пушкина, д. 25'), " +
+                            "('Северный филиал', 'г. Нижний Новогород, ул. Горького, д. 120'), " +
+                            "('Южный филиал', 'г. Нижний Новогород, ул. Ленина, д. 85')");
+
+                    // Тестовые врачи (теперь с branch_id)
+                    stmt.execute("INSERT INTO doctors (name, specialization, branch_id) VALUES " +
+                            "('Иванов Иван Алексеевич', 'Кардиолог', 1), " + // Центральный
+                            "('Петрова Елена Васильевна', 'Невролог', 2), " + // Северный
+                            "('Сидоров Александр Викторович', 'Терапевт', 3), " + // Южный
+                            "('Кузнецова Ольга Сергеевна', 'Педиатр', 1), " + // Центральный
+                            "('Николаев Дмитрий Викторович', 'Хирург', 2)"); // Северный
 
                     // Тестовое расписание
                     stmt.execute("INSERT INTO schedules (doctor_id, day_of_week, start_time, end_time) VALUES " +
-                            "(1, 'MONDAY', '09:00', '17:00'), " +
-                            "(1, 'WEDNESDAY', '09:00', '17:00'), " +
-                            "(2, 'TUESDAY', '10:00', '18:00'), " +
-                            "(2, 'THURSDAY', '10:00', '18:00'), " +
-                            "(3, 'FRIDAY', '08:00', '16:00')");
+                            "(1, 'Понедельник', '09:00', '17:00'), " +
+                            "(1, 'Среда', '09:00', '17:00'), " +
+                            "(2, 'Вторник', '10:00', '18:00'), " +
+                            "(2, 'Четверг', '10:00', '18:00'), " +
+                            "(3, 'Пятница', '08:00', '16:00'), " +
+                            "(4, 'Понедельник', '08:00', '16:00'), " +
+                            "(4, 'Вторник', '08:00', '16:00'), " +
+                            "(5, 'Среда', '09:00', '17:00')");
 
-                    // ТЕСТОВЫЕ ЗАПИСИ К ВРАЧАМ (ИСПОЛЬЗУЕМ НИКНЕЙМЫ)
+                    // Тестовые записи к врачам
                     stmt.execute("INSERT INTO appointments (patient_username, doctor_id, appointment_time, secret_id, status) VALUES " +
                             "('p.kotova', 1, '2024-01-15 10:00:00', 'SEC001', 'completed'), " +
                             "('m.maskov', 1, '2024-01-15 11:30:00', 'SEC002', 'completed'), " +
@@ -100,9 +119,9 @@ public class DatabaseManager {
                             "('m.maskov', 3, '2024-01-19 10:30:00', 'SEC010', 'scheduled'), " +
                             "('a.smirnova', 3, '2024-01-19 12:00:00', 'SEC011', 'scheduled'), " +
                             "('v.petrov', 3, '2024-01-19 13:30:00', 'SEC012', 'scheduled'), " +
-                            "('p.kotova', 1, '2024-01-22 09:30:00', 'SEC013', 'scheduled'), " +
-                            "('m.maskov', 2, '2024-01-23 11:00:00', 'SEC014', 'scheduled'), " +
-                            "('a.smirnova', 3, '2024-01-26 14:00:00', 'SEC015', 'scheduled')");
+                            "('p.kotova', 4, '2024-01-22 09:30:00', 'SEC013', 'scheduled'), " +
+                            "('m.maskov', 5, '2024-01-23 11:00:00', 'SEC014', 'scheduled'), " +
+                            "('a.smirnova', 4, '2024-01-26 14:00:00', 'SEC015', 'scheduled')");
                 }
 
                 System.out.println("База данных инициализирована успешно.");

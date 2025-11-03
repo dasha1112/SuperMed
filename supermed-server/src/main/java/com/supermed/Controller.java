@@ -98,5 +98,20 @@ public class Controller {
                 return "{\"error\": \"Не удалось удалить расписание\"}";
             }
         });
+        get("/branches", (req, res) -> {
+            List<Branch> branches = model.getAllBranches();
+            return gson.toJson(branches);
+        });
+
+        get("/branches/:id", (req, res) -> {
+            int branchId = Integer.parseInt(req.params("id"));
+            Branch branch = model.getBranchById(branchId);
+            if (branch != null) {
+                return gson.toJson(branch);
+            } else {
+                res.status(404);
+                return "{\"error\": \"Филиал не найден\"}";
+            }
+        });
     }
 }

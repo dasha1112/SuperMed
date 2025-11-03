@@ -1,8 +1,9 @@
 package com.supermed.entities;
 
+// Класс записей в мед учреждение
 public class Appointment {
     private int id;
-    private String patientUsername; // ИЗМЕНЕНО: было patientName
+    private String patientUsername;
     private int doctorId;
     private String appointmentTime;
     private String secretId;

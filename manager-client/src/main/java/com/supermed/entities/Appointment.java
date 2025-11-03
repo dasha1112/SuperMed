@@ -1,8 +1,9 @@
 package com.supermed.entities;
 
+// Класс записей в мед учреждение
 public class Appointment {
     private int id;
-    private String patientName;
+    private String patientUsername;
     private int doctorId;
     private String appointmentTime;
     private String secretId;
@@ -11,10 +12,10 @@ public class Appointment {
 
     public Appointment() {}
 
-    public Appointment(int id, String patientName, int doctorId, String appointmentTime,
+    public Appointment(int id, String patientUsername, int doctorId, String appointmentTime,
                        String secretId, String status, String doctorName) {
         this.id = id;
-        this.patientName = patientName;
+        this.patientUsername = patientUsername;
         this.doctorId = doctorId;
         this.appointmentTime = appointmentTime;
         this.secretId = secretId;
@@ -22,11 +23,11 @@ public class Appointment {
         this.doctorName = doctorName;
     }
 
-    // Геттеры и сеттеры для всех полей
+    // Геттеры и сеттеры
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
-    public String getPatientName() { return patientName; }
-    public void setPatientName(String patientName) { this.patientName = patientName; }
+    public String getPatientUsername() { return patientUsername; } // ИЗМЕНЕНО
+    public void setPatientUsername(String patientUsername) { this.patientUsername = patientUsername; } // ИЗМЕНЕНО
     public int getDoctorId() { return doctorId; }
     public void setDoctorId(int doctorId) { this.doctorId = doctorId; }
     public String getAppointmentTime() { return appointmentTime; }

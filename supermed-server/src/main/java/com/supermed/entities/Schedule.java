@@ -1,5 +1,6 @@
 package com.supermed.entities;
 
+// Класс расписание врача
 public class Schedule {
     private int id;
     private int doctorId;
@@ -8,6 +9,7 @@ public class Schedule {
     private String startTime;
     private String endTime;
     private int workingHours;
+    private String branchName;
 
     public Schedule() {}
 
@@ -32,10 +34,29 @@ public class Schedule {
 
     private void calculateWorkingHours() {
         try {
-            int start = Integer.parseInt(startTime.replace(":", ""));
-            int end = Integer.parseInt(endTime.replace(":", ""));
-            this.workingHours = (end - start) / 100;
-        } catch (NumberFormatException e) {
+            // Разделяем время на часы и минуты
+            String[] startParts = startTime.split(":");
+            String[] endParts = endTime.split(":");
+
+            int startHours = Integer.parseInt(startParts[0]);
+            int startMinutes = Integer.parseInt(startParts[1]);
+            int endHours = Integer.parseInt(endParts[0]);
+            int endMinutes = Integer.parseInt(endParts[1]);
+
+            // Переводим все в минуты
+            int startTotalMinutes = startHours * 60 + startMinutes;
+            int endTotalMinutes = endHours * 60 + endMinutes;
+
+            // Вычисляем разницу в минутах
+            int differenceMinutes = endTotalMinutes - startTotalMinutes;
+
+            // Переводим в часы (дробное число)
+            double hours = differenceMinutes / 60.0;
+
+            // Округляем до целых часов для отображения
+            this.workingHours = (int) Math.round(hours);
+
+        } catch (Exception e) {
             this.workingHours = 0;
         }
     }
@@ -50,6 +71,8 @@ public class Schedule {
     public String getDayOfWeek() { return dayOfWeek; }
     public void setDayOfWeek(String dayOfWeek) { this.dayOfWeek = dayOfWeek; }
     public String getStartTime() { return startTime; }
+    public String getBranchName() { return branchName; }
+    public void setBranchName(String branchName) { this.branchName = branchName; }
     public void setStartTime(String startTime) {
         this.startTime = startTime;
         calculateWorkingHours();

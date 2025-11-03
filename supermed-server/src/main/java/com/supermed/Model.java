@@ -87,7 +87,10 @@ public class Model {
     // Существующие методы для работы с врачами, расписанием и статистикой...
     public List<Doctor> getAllDoctors() {
         List<Doctor> doctors = new ArrayList<>();
-        String sql = "SELECT * FROM doctors ORDER BY name";
+        String sql = "SELECT d.*, b.name as branch_name, b.address as branch_address " +
+                "FROM doctors d " +
+                "JOIN branches b ON d.branch_id = b.id " +
+                "ORDER BY d.name";
 
         try (Connection conn = DatabaseManager.getConnection();
              Statement stmt = conn.createStatement();
@@ -98,7 +101,9 @@ public class Model {
                         rs.getInt("id"),
                         rs.getString("name"),
                         rs.getString("specialization"),
-                        rs.getString("branch")
+                        rs.getInt("branch_id"),
+                        rs.getString("branch_name"),
+                        rs.getString("branch_address")
                 );
                 doctors.add(doctor);
             }
@@ -185,11 +190,58 @@ public class Model {
         return appointments;
     }
 
+    public List<Branch> getAllBranches() {
+        List<Branch> branches = new ArrayList<>();
+        String sql = "SELECT * FROM branches ORDER BY name";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                Branch branch = new Branch(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("address")
+                );
+                branches.add(branch);
+            }
+        } catch (SQLException e) {
+            System.err.println("Ошибка при получении филиалов: " + e.getMessage());
+        }
+        return branches;
+    }
+
+    public Branch getBranchById(int branchId) {
+        String sql = "SELECT * FROM branches WHERE id = ?";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, branchId);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                return new Branch(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("address")
+                );
+            }
+            return null;
+        } catch (SQLException e) {
+            System.err.println("Ошибка при получении филиала: " + e.getMessage());
+            return null;
+        }
+    }
+
     public List<Statistics> getStatistics() {
         List<Statistics> stats = new ArrayList<>();
-        String sql = "SELECT d.name, d.specialization, d.branch, COUNT(a.id) as appointment_count " +
-                "FROM doctors d LEFT JOIN appointments a ON d.id = a.doctor_id " +
-                "GROUP BY d.id, d.name, d.specialization, d.branch";
+        String sql = "SELECT d.name, d.specialization, b.name as branch_name, b.address as branch_address, COUNT(a.id) as appointment_count " +
+                "FROM doctors d " +
+                "JOIN branches b ON d.branch_id = b.id " +
+                "LEFT JOIN appointments a ON d.id = a.doctor_id " +
+                "GROUP BY d.id, d.name, d.specialization, b.name, b.address";
 
         try (Connection conn = DatabaseManager.getConnection();
              Statement stmt = conn.createStatement();
@@ -199,7 +251,8 @@ public class Model {
                 Statistics stat = new Statistics(
                         rs.getString("name"),
                         rs.getString("specialization"),
-                        rs.getString("branch"),
+                        rs.getString("branch_name"),
+                        rs.getString("branch_address"),
                         rs.getInt("appointment_count")
                 );
                 stats.add(stat);
@@ -213,9 +266,11 @@ public class Model {
     // Методы для работы с расписанием...
     public List<Schedule> getAllSchedules() {
         List<Schedule> schedules = new ArrayList<>();
-        String sql = "SELECT s.*, d.name as doctor_name FROM schedules s " +
+        String sql = "SELECT s.*, d.name as doctor_name, b.name as branch_name " +
+                "FROM schedules s " +
                 "JOIN doctors d ON s.doctor_id = d.id " +
-                "ORDER BY d.name, s.day_of_week";
+                "JOIN branches b ON d.branch_id = b.id " +
+                "ORDER BY b.name, d.name, s.day_of_week";
 
         try (Connection conn = DatabaseManager.getConnection();
              Statement stmt = conn.createStatement();
@@ -230,6 +285,7 @@ public class Model {
                         rs.getString("start_time"),
                         rs.getString("end_time")
                 );
+                schedule.setBranchName(rs.getString("branch_name")); // ДОБАВЛЕНО
                 schedules.add(schedule);
             }
         } catch (SQLException e) {
@@ -239,18 +295,16 @@ public class Model {
     }
 
     public boolean updateSchedule(Schedule schedule) {
-        if (schedule.getWorkingHours() > 8) {
-            return false;
-        }
 
-        String sql = "UPDATE schedules SET start_time = ?, end_time = ? WHERE id = ?";
+        String sql = "UPDATE schedules SET day_of_week = ?, start_time = ?, end_time = ? WHERE id = ?";
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            pstmt.setString(1, schedule.getStartTime());
-            pstmt.setString(2, schedule.getEndTime());
-            pstmt.setInt(3, schedule.getId());
+            pstmt.setString(1, schedule.getDayOfWeek());
+            pstmt.setString(2, schedule.getStartTime());
+            pstmt.setString(3, schedule.getEndTime());
+            pstmt.setInt(4, schedule.getId());
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -260,9 +314,6 @@ public class Model {
     }
 
     public boolean addSchedule(Schedule schedule) {
-        if (schedule.getWorkingHours() > 8) {
-            return false;
-        }
 
         String sql = "INSERT INTO schedules (doctor_id, day_of_week, start_time, end_time) VALUES (?, ?, ?, ?)";
 

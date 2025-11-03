@@ -52,7 +52,7 @@ public class ManagerController implements Initializable {
     @FXML private TableColumn<Schedule, Integer> colScheduleHours;
     @FXML private TableColumn<Schedule, String> colScheduleActions;
     @FXML private Label scheduleCount;
-    @FXML private Button refreshScheduleBtn;
+
     @FXML private Button addScheduleBtn;
 
     @FXML private Label statusLabel;
@@ -128,7 +128,6 @@ public class ManagerController implements Initializable {
     }
 
     private void setupScheduleTable() {
-        colScheduleId.setCellValueFactory(new PropertyValueFactory<>("id"));
         colScheduleDoctor.setCellValueFactory(new PropertyValueFactory<>("doctorName"));
         colScheduleDay.setCellValueFactory(new PropertyValueFactory<>("dayOfWeek"));
         colScheduleStart.setCellValueFactory(new PropertyValueFactory<>("startTime"));
@@ -145,13 +144,7 @@ public class ManagerController implements Initializable {
                     setStyle("");
                 } else {
                     setText(item.toString());
-                    if (item > 8) {
-                        setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold; -fx-background-color: #ffcccc;");
-                    } else if (item == 8) {
-                        setStyle("-fx-text-fill: #f39c12; -fx-font-weight: bold;");
-                    } else {
-                        setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold;");
-                    }
+                    setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold;");
                 }
             }
         });
@@ -208,6 +201,29 @@ public class ManagerController implements Initializable {
             }
         } catch (IOException | InterruptedException e) {
             System.err.println("Ошибка при загрузке списка врачей: " + e.getMessage());
+        }
+    }
+
+    // Добавляем методы для работы с филиалами
+    private ObservableList<Branch> branchesData = FXCollections.observableArrayList();
+
+    private void loadBranches() {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(BASE_URL + "/branches"))
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200) {
+                Type branchListType = new TypeToken<List<Branch>>(){}.getType();
+                List<Branch> branches = gson.fromJson(response.body(), branchListType);
+                branchesData.clear();
+                branchesData.addAll(branches);
+            }
+        } catch (IOException | InterruptedException e) {
+            System.err.println("Ошибка при загрузке филиалов: " + e.getMessage());
         }
     }
 
@@ -306,7 +322,7 @@ public class ManagerController implements Initializable {
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    setText(item.getName() + " - " + item.getSpecialization() + " (" + item.getBranch() + ")");
+                    setText(item.getName() + " - " + item.getSpecialization() + " (" + item.getBranchName() + ")");
                 }
             }
         });
@@ -318,13 +334,13 @@ public class ManagerController implements Initializable {
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    setText(item.getName() + " - " + item.getSpecialization() + " (" + item.getBranch() + ")");
+                    setText(item.getName() + " - " + item.getSpecialization() + " (" + item.getBranchName() + ")");
                 }
             }
         });
 
         ComboBox<String> dayCombo = new ComboBox<>();
-        dayCombo.getItems().addAll("MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY");
+        dayCombo.getItems().addAll("Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье");
         dayCombo.setPromptText("День недели");
 
         TextField startTimeField = new TextField();
@@ -346,7 +362,8 @@ public class ManagerController implements Initializable {
 
         // Кнопки
         ButtonType addButtonType = new ButtonType("Добавить", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(addButtonType, ButtonType.CANCEL);
+        ButtonType cancelButtonType = new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dialog.getDialogPane().getButtonTypes().addAll(addButtonType, cancelButtonType);
 
         // Результат
         dialog.setResultConverter(dialogButton -> {
@@ -387,27 +404,35 @@ public class ManagerController implements Initializable {
         grid.setPadding(new Insets(20, 150, 10, 10));
 
         Label doctorLabel = new Label(schedule.getDoctorName());
-        Label dayLabel = new Label(schedule.getDayOfWeek());
+        Label branchLabel = new Label(schedule.getBranchName());
+
+        ComboBox<String> dayCombo = new ComboBox<>();
+        dayCombo.getItems().addAll("Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье");
+        dayCombo.setValue(schedule.getDayOfWeek());
 
         TextField startTimeField = new TextField(schedule.getStartTime());
         TextField endTimeField = new TextField(schedule.getEndTime());
 
         grid.add(new Label("Врач:"), 0, 0);
         grid.add(doctorLabel, 1, 0);
-        grid.add(new Label("День недели:"), 0, 1);
-        grid.add(dayLabel, 1, 1);
-        grid.add(new Label("Начало работы:"), 0, 2);
-        grid.add(startTimeField, 1, 2);
-        grid.add(new Label("Конец работы:"), 0, 3);
-        grid.add(endTimeField, 1, 3);
+        grid.add(new Label("Филиал:"), 0, 1);
+        grid.add(branchLabel, 1, 1);
+        grid.add(new Label("День недели:"), 0, 2);
+        grid.add(dayCombo, 1, 2);
+        grid.add(new Label("Начало работы:"), 0, 3);
+        grid.add(startTimeField, 1, 3);
+        grid.add(new Label("Конец работы:"), 0, 4);
+        grid.add(endTimeField, 1, 4);
 
         dialog.getDialogPane().setContent(grid);
 
         ButtonType saveButtonType = new ButtonType("Сохранить", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
+        ButtonType cancelButtonType = new ButtonType("Отмена", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, cancelButtonType);
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == saveButtonType) {
+                schedule.setDayOfWeek(dayCombo.getValue());
                 schedule.setStartTime(startTimeField.getText());
                 schedule.setEndTime(endTimeField.getText());
                 return schedule;
@@ -436,9 +461,6 @@ public class ManagerController implements Initializable {
                 showAlert("Успех", "Расписание успешно добавлено", "INFO");
             } else {
                 String errorMessage = "Не удалось добавить расписание";
-                if (response.body().contains("8 часов")) {
-                    errorMessage = "Рабочий день не может превышать 8 часов!";
-                }
                 updateStatus("Ошибка добавления", "error");
                 showAlert("Ошибка", errorMessage, "ERROR");
             }
@@ -465,9 +487,6 @@ public class ManagerController implements Initializable {
                 showAlert("Успех", "Расписание успешно обновлено", "INFO");
             } else {
                 String errorMessage = "Не удалось обновить расписание";
-                if (response.body().contains("8 часов")) {
-                    errorMessage = "Рабочий день не может превышать 8 часов!";
-                }
                 updateStatus("Ошибка обновления", "error");
                 showAlert("Ошибка", errorMessage, "ERROR");
             }
