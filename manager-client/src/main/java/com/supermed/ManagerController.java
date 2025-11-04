@@ -38,26 +38,25 @@ public class ManagerController implements Initializable {
     private final Gson gson = new Gson();
 
     // Элементы интерфейса
-    @FXML private TableView<DetailedAppointment> statisticsTable;
-    @FXML private TableColumn<Statistics, String> colDoctorName;
-    @FXML private TableColumn<Statistics, String> colSpecialization;
-    @FXML private TableColumn<Statistics, String> colBranchName;
+
+    // Элементы для вкладки статистика
+    @FXML private TableView<Statistic> statisticsTable;
     @FXML private TableColumn<Appointment, String> colAppointmentDate;
     @FXML private TableColumn<Appointment, String> colStartTime;
     @FXML private TableColumn<Appointment, String> colEndTime;
-    @FXML private TableColumn<DetailedAppointment, String> colDoctorSpecialization;
+    @FXML private TableColumn<Statistic, String> colDoctorName;
+    @FXML private TableColumn<Statistic, String> colBranchName;
+    @FXML private TableColumn<Statistic, String> colDoctorSpecialization;
+    @FXML private TableColumn<Statistic, String> colDoctorSchedule;
     @FXML private ComboBox<Doctor> doctorFilterComboBox;
     @FXML private ComboBox<Branch> branchFilterComboBox;
-    @FXML private TextField searchField;
     @FXML private DatePicker startDatePicker;
     @FXML private DatePicker endDatePicker;
-    @FXML private TableColumn<Statistics, Integer> colAppointmentCount;
-    @FXML private TableColumn<DetailedAppointment, String> colDoctorSchedule; // НОВАЯ КОЛОНКА
     @FXML private Label statsCount;
     @FXML private Button loadStatsBtn;
 
+    // Элемнты для вкладки расписание врачей
     @FXML private TableView<Schedule> scheduleTable;
-    @FXML private TableColumn<Schedule, Integer> colScheduleId;
     @FXML private TableColumn<Schedule, String> colScheduleDoctor;
     @FXML private TableColumn<Schedule, String> colScheduleDay;
     @FXML private TableColumn<Schedule, String> colScheduleStart;
@@ -65,15 +64,15 @@ public class ManagerController implements Initializable {
     @FXML private TableColumn<Schedule, Integer> colScheduleHours;
     @FXML private TableColumn<Schedule, String> colScheduleActions;
     @FXML private Label scheduleCount;
-
     @FXML private Button addScheduleBtn;
 
+    // Используется для демонстрации информации о текущем пользователе
     @FXML private Label statusLabel;
     @FXML private Label userInfoLabel;
 
 
     // Данные для таблиц
-    private ObservableList<DetailedAppointment> allAppointmentsData = FXCollections.observableArrayList();
+    private ObservableList<Statistic> allAppointmentsData = FXCollections.observableArrayList();
     private ObservableList<Doctor> doctorsFilterData = FXCollections.observableArrayList();
     private ObservableList<Branch> branchesFilterData = FXCollections.observableArrayList();
     private ObservableList<Schedule> scheduleData = FXCollections.observableArrayList();
@@ -82,31 +81,13 @@ public class ManagerController implements Initializable {
     // Текущий пользователь
     private User currentUser;
 
-//    @Override
-//    public void initialize(URL location, ResourceBundle resources) {
-//        setupStatisticsTable();
-//        setupScheduleTable();
-//        updateStatus("Готов к работе", "success");
-//        //loadDoctors();
-//        refreshSchedules();
-//
-//        // Добавляем слушателей для полей фильтрации, чтобы обновлять статистику
-//        searchField.textProperty().addListener((obs, oldVal, newVal) -> loadStatistics());
-//        startDatePicker.valueProperty().addListener((obs, oldVal, newVal) -> loadStatistics());
-//        endDatePicker.valueProperty().addListener((obs, oldVal, newVal) -> loadStatistics());
-//        // Показываем информацию о пользователе
-//        if (currentUser != null) {
-//            userInfoLabel.setText("Пользователь: " + currentUser.getUsername() + " (" + getUserTypeDisplayName(currentUser.getUserType()) + ")");
-//        }
-//    }
 @Override
 public void initialize(URL location, ResourceBundle resources) {
     setupStatisticsTable();
     setupScheduleTable();
     updateStatus("Готов к работе", "success");
-    // loadDoctors(); // Этот метод теперь не нужен, loadDoctorsFilter() загрузит данные для ComboBox
-    // loadBranches(); // Нужно будет вызвать для загрузки филиалов
     refreshSchedules();
+    loadDoctors();
     // Загружаем данные для ComboBox'ов фильтрации
     loadDoctorsForFilter();
     loadBranchesForFilter();
@@ -168,15 +149,8 @@ public void initialize(URL location, ResourceBundle resources) {
         }
     }
 
+    //  Загрузка таблицы статистики (записей)
     private void setupStatisticsTable() {
-//        colAppointmentDate.setCellValueFactory(new PropertyValueFactory<>("appointmentDate"));
-//        colDoctorName.setCellValueFactory(new PropertyValueFactory<>("doctorName"));
-//        colDoctorSpecialization.setCellValueFactory(new PropertyValueFactory<>("doctorSpecialization"));
-//        colBranchName.setCellValueFactory(new PropertyValueFactory<>("branchName"));
-//        colDoctorSchedule.setCellValueFactory(new PropertyValueFactory<>("formattedDoctorSchedule"));
-//        colStartTime.setCellValueFactory(new PropertyValueFactory<>("startTime"));
-//        colEndTime.setCellValueFactory(new PropertyValueFactory<>("endTime"));
-//        statisticsTable.setItems(allAppointmentsData);
         colAppointmentDate.setCellValueFactory(new PropertyValueFactory<>("appointmentDate"));
         colDoctorName.setCellValueFactory(new PropertyValueFactory<>("doctorName"));
         colDoctorSpecialization.setCellValueFactory(new PropertyValueFactory<>("doctorSpecialization"));
@@ -186,6 +160,8 @@ public void initialize(URL location, ResourceBundle resources) {
         colEndTime.setCellValueFactory(new PropertyValueFactory<>("endTime"));
         statisticsTable.setItems(allAppointmentsData);
     }
+
+    //  Загрузка всех врачей для фильтра по врачам
     private void loadDoctorsForFilter() {
         try {
             HttpRequest request = HttpRequest.newBuilder()
@@ -205,7 +181,7 @@ public void initialize(URL location, ResourceBundle resources) {
             System.err.println("Ошибка при загрузке списка врачей для фильтрации: " + e.getMessage());
         }
     }
-    // НОВЫЙ МЕТОД для загрузки филиалов для фильтрации
+    // Загрузка всех филиалов для фильтра по филиалам
     private void loadBranchesForFilter() {
         try {
             HttpRequest request = HttpRequest.newBuilder()
@@ -226,7 +202,7 @@ public void initialize(URL location, ResourceBundle resources) {
         }
     }
 
-
+    //  Метод по загрузке вкладки с расписанием врачей
     private void setupScheduleTable() {
         colScheduleDoctor.setCellValueFactory(new PropertyValueFactory<>("doctorName"));
         colScheduleDay.setCellValueFactory(new PropertyValueFactory<>("dayOfWeek"));
@@ -284,6 +260,7 @@ public void initialize(URL location, ResourceBundle resources) {
         scheduleTable.setItems(scheduleData);
     }
 
+    // Метод для загрузки списка врачей при добавлении расписания
     private void loadDoctors() {
         try {
             HttpRequest request = HttpRequest.newBuilder()
@@ -307,28 +284,9 @@ public void initialize(URL location, ResourceBundle resources) {
     // Добавляем методы для работы с филиалами
     private ObservableList<Branch> branchesData = FXCollections.observableArrayList();
 
-    private void loadBranches() {
-        try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BASE_URL + "/branches"))
-                    .GET()
-                    .build();
-
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() == 200) {
-                Type branchListType = new TypeToken<List<Branch>>(){}.getType();
-                List<Branch> branches = gson.fromJson(response.body(), branchListType);
-                branchesData.clear();
-                branchesData.addAll(branches);
-            }
-        } catch (IOException | InterruptedException e) {
-            System.err.println("Ошибка при загрузке филиалов: " + e.getMessage());
-        }
-    }
-
+    //  Метод для загрузки статистики
     @FXML
-    private void loadStatistics() { // Этот метод теперь будет принимать параметры фильтрации
+    private void loadStatistics() {
         if (currentUser != null && !currentUser.getUserType().equals("MANAGER")) {
             showAlert("Ошибка доступа", "Только менеджеры могут просматривать детальный отчет по приемам", "ERROR");
             return;
@@ -364,12 +322,12 @@ public void initialize(URL location, ResourceBundle resources) {
                     .build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() == 200) {
-                Type detailedAppointmentListType = new TypeToken<List<DetailedAppointment>>(){}.getType();
-                List<DetailedAppointment> detailedAppointments = gson.fromJson(response.body(), detailedAppointmentListType);
+                Type detailedAppointmentListType = new TypeToken<List<Statistic>>(){}.getType();
+                List<Statistic> statistics = gson.fromJson(response.body(), detailedAppointmentListType);
                 allAppointmentsData.clear();
-                allAppointmentsData.addAll(detailedAppointments);
-                statsCount.setText("Всего записей: " + detailedAppointments.size());
-                updateStatus("Загружен детальный отчет по " + detailedAppointments.size() + " записям", "success");
+                allAppointmentsData.addAll(statistics);
+                statsCount.setText("Всего записей: " + statistics.size());
+                updateStatus("Загружен детальный отчет по " + statistics.size() + " записям", "success");
             } else {
                 updateStatus("Ошибка загрузки: " + response.statusCode(), "error");
                 showAlert("Ошибка", "Не удалось загрузить детальный отчет по приемам", "ERROR");
@@ -381,6 +339,7 @@ public void initialize(URL location, ResourceBundle resources) {
         }
     }
 
+    //  Метод для обновления расписания врачей
     @FXML
     private void refreshSchedules() {
         updateStatus("Загрузка расписания...", "info");
@@ -410,6 +369,7 @@ public void initialize(URL location, ResourceBundle resources) {
         }
     }
 
+    // Метод для показа окна добавления расписания врача
     @FXML
     private void showAddScheduleDialog() {
         // Проверяем права доступа
@@ -502,6 +462,7 @@ public void initialize(URL location, ResourceBundle resources) {
         result.ifPresent(this::addSchedule);
     }
 
+    //  Метод для показа окна редактирования расписания врача
     private void showEditScheduleDialog(Schedule schedule) {
         // Проверяем права доступа
         if (currentUser != null && !currentUser.getUserType().equals("MANAGER")) {
@@ -559,6 +520,7 @@ public void initialize(URL location, ResourceBundle resources) {
         result.ifPresent(this::updateSchedule);
     }
 
+    //  Метод добавления расписания
     private void addSchedule(Schedule schedule) {
         try {
             String json = gson.toJson(schedule);
@@ -585,6 +547,7 @@ public void initialize(URL location, ResourceBundle resources) {
         }
     }
 
+    // Метод редактирования расписания
     private void updateSchedule(Schedule schedule) {
         try {
             String json = gson.toJson(schedule);
@@ -611,6 +574,7 @@ public void initialize(URL location, ResourceBundle resources) {
         }
     }
 
+    //  Метод удаления расписания
     private void deleteSchedule(Schedule schedule) {
         // Проверяем права доступа
         if (currentUser != null && !currentUser.getUserType().equals("MANAGER")) {
@@ -649,6 +613,7 @@ public void initialize(URL location, ResourceBundle resources) {
         }
     }
 
+    //  Метод выхода из главного окна и переход на окно входа (логгирования)
     @FXML
     private void handleLogout() {
         try {

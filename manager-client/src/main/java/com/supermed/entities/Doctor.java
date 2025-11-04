@@ -1,5 +1,6 @@
 package com.supermed.entities;
 
+// Класс врачей
 public class Doctor {
     private int id;
     private String name;

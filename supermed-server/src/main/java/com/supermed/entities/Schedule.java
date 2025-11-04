@@ -1,6 +1,6 @@
 package com.supermed.entities;
 
-// Класс расписание врача
+// Класс расписание к врачу
 public class Schedule {
     private int id;
     private int doctorId;

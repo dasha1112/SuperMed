@@ -1,6 +1,6 @@
 package com.supermed.entities;
 
-public class DetailedAppointment {
+public class Statistic {
     private int id;
     private String patientUsername;
     private int doctorId;
@@ -17,11 +17,11 @@ public class DetailedAppointment {
     private String doctorScheduleDayOfWeek; // День недели расписания
     private String doctorScheduleStartTime; // Начало рабочего дня врача
     private String doctorScheduleEndTime;   // Конец рабочего дня врача
-    public DetailedAppointment() {}
-    public DetailedAppointment(int id, String patientUsername, int doctorId, String appointmentDate,
-                               String startTime, String endTime, String secretId, String status,
-                               String doctorName, String doctorSpecialization, String branchName, String branchAddress, // Обновленный конструктор
-                               String doctorScheduleDayOfWeek, String doctorScheduleStartTime, String doctorScheduleEndTime) {
+    public Statistic() {}
+    public Statistic(int id, String patientUsername, int doctorId, String appointmentDate,
+                     String startTime, String endTime, String secretId, String status,
+                     String doctorName, String doctorSpecialization, String branchName, String branchAddress, // Обновленный конструктор
+                     String doctorScheduleDayOfWeek, String doctorScheduleStartTime, String doctorScheduleEndTime) {
         this.id = id;
         this.patientUsername = patientUsername;
         this.doctorId = doctorId;

@@ -19,8 +19,8 @@ import java.net.http.HttpResponse;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+//  Класс для окна входа
 public class LoginController implements Initializable {
-
     private static final String BASE_URL = "http://localhost:4567";
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final Gson gson = new Gson();
@@ -45,6 +45,7 @@ public class LoginController implements Initializable {
         passwordField.textProperty().addListener((obs, oldVal, newVal) -> clearStatus());
     }
 
+    //  Вход (логгирование)
     @FXML
     private void handleLogin() {
         String username = usernameField.getText().trim();
@@ -59,6 +60,8 @@ public class LoginController implements Initializable {
         performAuth("/auth/login", username, password, userType, "входа");
     }
 
+
+    // Регистрация нового пользователя
     @FXML
     private void handleRegister() {
         String username = usernameField.getText().trim();
@@ -78,6 +81,7 @@ public class LoginController implements Initializable {
         performAuth("/auth/register", username, password, userType, "регистрации");
     }
 
+    //  Авторизация и переход к главному окну (в данном случае к окну менеджера)
     private void performAuth(String endpoint, String username, String password, String userType, String actionType) {
         try {
             AuthRequest authRequest = new AuthRequest(username, password, userType);
@@ -106,6 +110,7 @@ public class LoginController implements Initializable {
         }
     }
 
+    // Метод для перехода к окну менеджера
     private void openMainWindow(User user) {
         try {
             // Закрываем текущее окно

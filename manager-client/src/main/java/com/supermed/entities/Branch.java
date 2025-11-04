@@ -1,5 +1,6 @@
 package com.supermed.entities;
 
+// Класс филиалов
 public class Branch {
     private int id;
     private String name;

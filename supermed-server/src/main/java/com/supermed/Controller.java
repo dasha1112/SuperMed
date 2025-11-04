@@ -67,8 +67,8 @@ public class Controller {
             }
             String startDate = req.queryParams("startDate");
             String endDate = req.queryParams("endDate");
-            List<DetailedAppointment> detailedAppointments = model.getDetailedAppointmentsReport(doctorId, branchId, startDate, endDate);
-            return gson.toJson(detailedAppointments);
+            List<Statistic> statistics = model.getDetailedAppointmentsReport(doctorId, branchId, startDate, endDate);
+            return gson.toJson(statistics);
         });
 
         get("/schedules", (req, res) -> {
@@ -84,7 +84,7 @@ public class Controller {
                 return "{\"message\": \"Расписание обновлено успешно\"}";
             } else {
                 res.status(400);
-                return "{\"error\": \"Не удалось обновить расписание. Проверьте, что рабочий день не превышает 8 часов\"}";
+                return "{\"error\": \"Не удалось обновить расписание.\"}";
             }
         });
 
@@ -96,7 +96,7 @@ public class Controller {
                 return "{\"message\": \"Расписание добавлено успешно\"}";
             } else {
                 res.status(400);
-                return "{\"error\": \"Не удалось добавить расписание. Проверьте, что рабочий день не превышает 8 часов\"}";
+                return "{\"error\": \"Не удалось добавить расписание.\"}";
             }
         });
 

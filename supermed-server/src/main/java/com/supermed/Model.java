@@ -5,9 +5,10 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+// Класс, описывающий большую часть функционала
 public class Model {
 
-    // Методы аутентификации
+    // Метод для входа в систему (логирование)
     public AuthResponse loginUser(String username, String password, String userType) {
         String hashedPassword = DatabaseManager.hashPassword(password);
         String sql = "SELECT id, username, user_type, created_at FROM users WHERE username = ? AND password = ? AND user_type = ?";
@@ -38,6 +39,7 @@ public class Model {
         }
     }
 
+    // Метод регистрации нового пользователя
     public AuthResponse registerUser(String username, String password, String userType) {
         // Проверяем, не занято ли имя пользователя
         if (isUsernameTaken(username)) {
@@ -68,6 +70,7 @@ public class Model {
         }
     }
 
+    // Метод, который проверяет, что имя пользователя еще не занято
     private boolean isUsernameTaken(String username) {
         String sql = "SELECT id FROM users WHERE username = ?";
 
@@ -84,7 +87,7 @@ public class Model {
         }
     }
 
-    // Существующие методы для работы с врачами, расписанием и статистикой...
+    // Метод чтобы получить всех врачей из БД
     public List<Doctor> getAllDoctors() {
         List<Doctor> doctors = new ArrayList<>();
         String sql = "SELECT d.*, b.name as branch_name, b.address as branch_address " +
@@ -113,6 +116,7 @@ public class Model {
         return doctors;
     }
 
+    // Метод чтобы получить все записи из БД
     public List<Appointment> getAllAppointments() {
         List<Appointment> appointments = new ArrayList<>();
         String sql = "SELECT a.*, d.name as doctor_name FROM appointments a " +
@@ -141,8 +145,10 @@ public class Model {
         }
         return appointments;
     }
-    public List<DetailedAppointment> getDetailedAppointmentsReport(Integer doctorId, Integer branchId, String startDate, String endDate) { // Обновленные параметры
-        List<DetailedAppointment> detailedAppointments = new ArrayList<>();
+
+    // Метод для статистики, который показывает все записи у врачей и фильтрует их (используется только менеджером!)
+    public List<Statistic> getDetailedAppointmentsReport(Integer doctorId, Integer branchId, String startDate, String endDate) {
+        List<Statistic> statistics = new ArrayList<>();
         StringBuilder sqlBuilder = new StringBuilder(
                 "SELECT a.id, a.patient_username, a.doctor_id, a.appointment_date, " +
                         "a.start_time, a.end_time, a.secret_id, a.status, " +
@@ -184,7 +190,7 @@ public class Model {
             sqlBuilder.append("b.id = ?");
             params.add(branchId);
         }
-        // Фильтр по датам (остается без изменений)
+        // Фильтр по датам
         if (startDate != null && !startDate.trim().isEmpty()) {
             if (!hasWhere) {
                 sqlBuilder.append(" WHERE ");
@@ -213,7 +219,7 @@ public class Model {
             }
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    DetailedAppointment detailedAppointment = new DetailedAppointment(
+                    Statistic statistic = new Statistic(
                             rs.getInt("id"),
                             rs.getString("patient_username"),
                             rs.getInt("doctor_id"),
@@ -230,15 +236,16 @@ public class Model {
                             rs.getString("doctor_schedule_start_time"),
                             rs.getString("doctor_schedule_end_time")
                     );
-                    detailedAppointments.add(detailedAppointment);
+                    statistics.add(statistic);
                 }
             }
         } catch (SQLException e) {
             System.err.println("Ошибка при получении детального отчета по записям: " + e.getMessage());
         }
-        return detailedAppointments;
+        return statistics;
     }
 
+    // Метод для создпния записи к врачу
     public boolean createAppointment(Appointment appointment) {
         String sql = "INSERT INTO appointments (patient_username, doctor_id, appointment_date, start_time, end_time, secret_id) VALUES (?, ?, ?, ?, ?, ?)";
 
@@ -259,6 +266,7 @@ public class Model {
         }
     }
 
+    // Метод для получения записей пациента
     public List<Appointment> getPatientAppointments(String username) {
         List<Appointment> appointments = new ArrayList<>();
         String sql = "SELECT a.*, d.name as doctor_name FROM appointments a " +
@@ -293,6 +301,7 @@ public class Model {
         return appointments;
     }
 
+    // Метод для получения всех имеющихся филиалов
     public List<Branch> getAllBranches() {
         List<Branch> branches = new ArrayList<>();
         String sql = "SELECT * FROM branches ORDER BY name";
@@ -315,6 +324,7 @@ public class Model {
         return branches;
     }
 
+    // Метод чтобы получить филиал по его id
     public Branch getBranchById(int branchId) {
         String sql = "SELECT * FROM branches WHERE id = ?";
 
@@ -338,35 +348,7 @@ public class Model {
         }
     }
 
-    public List<Statistics> getStatistics() {
-        List<Statistics> stats = new ArrayList<>();
-        String sql = "SELECT d.name, d.specialization, b.name as branch_name, b.address as branch_address, COUNT(a.id) as appointment_count " +
-                "FROM doctors d " +
-                "JOIN branches b ON d.branch_id = b.id " +
-                "LEFT JOIN appointments a ON d.id = a.doctor_id " +
-                "GROUP BY d.id, d.name, d.specialization, b.name, b.address";
-
-        try (Connection conn = DatabaseManager.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-
-            while (rs.next()) {
-                Statistics stat = new Statistics(
-                        rs.getString("name"),
-                        rs.getString("specialization"),
-                        rs.getString("branch_name"),
-                        rs.getString("branch_address"),
-                        rs.getInt("appointment_count")
-                );
-                stats.add(stat);
-            }
-        } catch (SQLException e) {
-            System.err.println("Ошибка при получении статистики: " + e.getMessage());
-        }
-        return stats;
-    }
-
-    // Методы для работы с расписанием...
+    // Метод для получения расписания врача
     public List<Schedule> getAllSchedules() {
         List<Schedule> schedules = new ArrayList<>();
         String sql = "SELECT s.*, d.name as doctor_name, b.name as branch_name " +
@@ -388,7 +370,7 @@ public class Model {
                         rs.getString("start_time"),
                         rs.getString("end_time")
                 );
-                schedule.setBranchName(rs.getString("branch_name")); // ДОБАВЛЕНО
+                schedule.setBranchName(rs.getString("branch_name"));
                 schedules.add(schedule);
             }
         } catch (SQLException e) {
@@ -397,6 +379,7 @@ public class Model {
         return schedules;
     }
 
+    // Метод для редактирования расписания врача (используется только менеджером!)
     public boolean updateSchedule(Schedule schedule) {
 
         String sql = "UPDATE schedules SET day_of_week = ?, start_time = ?, end_time = ? WHERE id = ?";
@@ -416,6 +399,7 @@ public class Model {
         }
     }
 
+    // Метод для добавления расписания врача (используется только менеджером!)
     public boolean addSchedule(Schedule schedule) {
 
         String sql = "INSERT INTO schedules (doctor_id, day_of_week, start_time, end_time) VALUES (?, ?, ?, ?)";
@@ -435,6 +419,7 @@ public class Model {
         }
     }
 
+    // Метод для удаления расписания врача (используется только менеджером!)
     public boolean deleteSchedule(int scheduleId) {
         String sql = "DELETE FROM schedules WHERE id = ?";
 

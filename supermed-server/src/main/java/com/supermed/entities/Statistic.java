@@ -1,27 +1,27 @@
 package com.supermed.entities;
 
-public class DetailedAppointment {
+// Класс использующийся для получения статистики записей по врачам и филиалам (используется только менеджерами!)
+public class Statistic {
     private int id;
     private String patientUsername;
     private int doctorId;
     private String doctorSpecialization;
     private String appointmentDate;
-    private String startTime; // Время начала приема
-    private String endTime;   // Время окончания приема
+    private String startTime;  // Время начало записи
+    private String endTime;  // Время окончания записи
     private String secretId;
     private String status;
     private String doctorName;
     private String branchName;
     private String branchAddress;
-    // Поля из Schedule, относящиеся к дню приема
     private String doctorScheduleDayOfWeek; // День недели расписания
     private String doctorScheduleStartTime; // Начало рабочего дня врача
     private String doctorScheduleEndTime;   // Конец рабочего дня врача
-    public DetailedAppointment() {}
-    public DetailedAppointment(int id, String patientUsername, int doctorId, String appointmentDate,
-                               String startTime, String endTime, String secretId, String status,
-                               String doctorName, String doctorSpecialization, String branchName, String branchAddress, // Обновленный конструктор
-                               String doctorScheduleDayOfWeek, String doctorScheduleStartTime, String doctorScheduleEndTime) {
+    public Statistic() {}
+    public Statistic(int id, String patientUsername, int doctorId, String appointmentDate,
+                     String startTime, String endTime, String secretId, String status,
+                     String doctorName, String doctorSpecialization, String branchName, String branchAddress, // Обновленный конструктор
+                     String doctorScheduleDayOfWeek, String doctorScheduleStartTime, String doctorScheduleEndTime) {
         this.id = id;
         this.patientUsername = patientUsername;
         this.doctorId = doctorId;
@@ -31,7 +31,7 @@ public class DetailedAppointment {
         this.secretId = secretId;
         this.status = status;
         this.doctorName = doctorName;
-        this.doctorSpecialization = doctorSpecialization; // Инициализация нового поля
+        this.doctorSpecialization = doctorSpecialization;
         this.branchName = branchName;
         this.branchAddress = branchAddress;
         this.doctorScheduleDayOfWeek = doctorScheduleDayOfWeek;
@@ -39,12 +39,9 @@ public class DetailedAppointment {
         this.doctorScheduleEndTime = doctorScheduleEndTime;
     }
 
-    public String getDoctorSpecialization() { return doctorSpecialization; } // НОВЫЙ ГЕТТЕР
-    public void setDoctorSpecialization(String doctorSpecialization) { this.doctorSpecialization = doctorSpecialization; } // НОВЫЙ СЕТТЕР
+    public String getDoctorSpecialization() { return doctorSpecialization; }
+    public void setDoctorSpecialization(String doctorSpecialization) { this.doctorSpecialization = doctorSpecialization; }
 
-    // --- Геттеры и Сеттеры для всех полей ---
-    // (Я опущу их здесь для краткости, но они должны быть для всех полей,
-    // включая новые doctorScheduleDayOfWeek, doctorScheduleStartTime, doctorScheduleEndTime)
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     public String getPatientUsername() { return patientUsername; }
@@ -73,15 +70,12 @@ public class DetailedAppointment {
     public void setDoctorScheduleStartTime(String doctorScheduleStartTime) { this.doctorScheduleStartTime = doctorScheduleStartTime; }
     public String getDoctorScheduleEndTime() { return doctorScheduleEndTime; }
     public void setDoctorScheduleEndTime(String doctorScheduleEndTime) { this.doctorScheduleEndTime = doctorScheduleEndTime; }
+
     // Метод для вывода расписания врача в удобном формате
     public String getFormattedDoctorSchedule() {
         if (doctorScheduleDayOfWeek != null && doctorScheduleStartTime != null && doctorScheduleEndTime != null) {
             return doctorScheduleDayOfWeek + " " + doctorScheduleStartTime + "-" + doctorScheduleEndTime;
         }
         return "Расписание не указано";
-    }
-    // Метод для получения времени приема (как раньше)
-    public String getAppointmentTimeRange() {
-        return getStartTime() + "-" + getEndTime();
     }
 }

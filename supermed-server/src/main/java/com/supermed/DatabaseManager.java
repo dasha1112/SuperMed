@@ -4,6 +4,7 @@ import java.sql.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+//  Класс для работы с базой данных
 public class DatabaseManager {
     private static final String DB_URL = "jdbc:sqlite:supermed.db";
 
@@ -20,13 +21,13 @@ public class DatabaseManager {
                         "user_type TEXT NOT NULL, " +
                         "created_at TEXT NOT NULL);";
 
-                // ТАБЛИЦА ФИЛИАЛОВ (НОВАЯ)
+                // Таблица филиалов
                 String sqlBranches = "CREATE TABLE IF NOT EXISTS branches (" +
                         "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                         "name TEXT NOT NULL, " +
                         "address TEXT NOT NULL);";
 
-                // Таблица врачей (ОБНОВЛЯЕМ: branch -> branch_id)
+                // Таблица врачей
                 String sqlDoctors = "CREATE TABLE IF NOT EXISTS doctors (" +
                         "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                         "name TEXT NOT NULL, " +
@@ -39,9 +40,9 @@ public class DatabaseManager {
                         "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                         "patient_username TEXT NOT NULL, " +
                         "doctor_id INTEGER NOT NULL, " +
-                        "appointment_date TEXT NOT NULL, " +      // НОВОЕ: Дата записи
-                        "start_time TEXT NOT NULL, " +           // НОВОЕ: Время начала
-                        "end_time TEXT NOT NULL, " +             // НОВОЕ: Время окончания
+                        "appointment_date TEXT NOT NULL, " +
+                        "start_time TEXT NOT NULL, " +
+                        "end_time TEXT NOT NULL, " +
                         "secret_id TEXT NOT NULL, " +
                         "status TEXT NOT NULL DEFAULT 'scheduled', " +
                         "FOREIGN KEY(doctor_id) REFERENCES doctors(id));";
@@ -64,17 +65,17 @@ public class DatabaseManager {
                 // Тестовые данные
                 ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM users");
                 if (rs.getInt(1) == 0) {
-                    // Создаем тестового менеджера
+                    // Создаем тестового менеджера (для входа в систему)
                     String managerPassword = hashPassword("manager123");
                     stmt.execute("INSERT INTO users (username, password, user_type, created_at) VALUES " +
                             "('m.shemelova', '" + managerPassword + "', 'MANAGER', datetime('now'))");
 
-                    // Создаем тестового врача
+                    // Создаем тестового врача (для входа в систему)
                     String doctorPassword = hashPassword("doctor123");
                     stmt.execute("INSERT INTO users (username, password, user_type, created_at) VALUES " +
                             "('d.ivanov', '" + doctorPassword + "', 'DOCTOR', datetime('now'))");
 
-                    // Создаем тестовых пациентов
+                    // Создаем тестовых пациентов (для входа в систему)
                     String patientPassword = hashPassword("patient123");
                     stmt.execute("INSERT INTO users (username, password, user_type, created_at) VALUES " +
                             "('p.kotova', '" + patientPassword + "', 'PATIENT', datetime('now')), " +
@@ -82,13 +83,13 @@ public class DatabaseManager {
                             "('a.smirnova', '" + patientPassword + "', 'PATIENT', datetime('now')), " +
                             "('v.petrov', '" + patientPassword + "', 'PATIENT', datetime('now'))");
 
-                    // ТЕСТОВЫЕ ФИЛИАЛЫ
+                    // Тестовые филиалы
                     stmt.execute("INSERT INTO branches (name, address) VALUES " +
                             "('Центральный филиал', 'г. Нижний Новогород, ул. Пушкина, д. 25'), " +
                             "('Северный филиал', 'г. Нижний Новогород, ул. Горького, д. 120'), " +
                             "('Южный филиал', 'г. Нижний Новогород, ул. Ленина, д. 85')");
 
-                    // Тестовые врачи (теперь с branch_id)
+                    // Тестовые врачи
                     stmt.execute("INSERT INTO doctors (name, specialization, branch_id) VALUES " +
                             "('Иванов Иван Алексеевич', 'Кардиолог', 1), " + // Центральный
                             "('Петрова Елена Васильевна', 'Невролог', 2), " + // Северный

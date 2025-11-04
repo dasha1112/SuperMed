@@ -1,5 +1,6 @@
 package com.supermed.entities;
 
+// Класс пользователя (Врач, менеджер или пациент)
 public class User {
     private int id;
     private String username;
