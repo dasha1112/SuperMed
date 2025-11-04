@@ -1,0 +1,160 @@
+package com.supermed;
+
+import java.sql.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
+//  Класс для работы с базой данных
+public class DatabaseManager {
+    private static final String DB_URL = "jdbc:sqlite:supermed.db";
+
+    public static void initDatabase() {
+        try (Connection conn = DriverManager.getConnection(DB_URL)) {
+            if (conn != null) {
+                Statement stmt = conn.createStatement();
+
+                // Таблица пользователей
+                String sqlUsers = "CREATE TABLE IF NOT EXISTS users (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        "username TEXT UNIQUE NOT NULL, " +
+                        "password TEXT NOT NULL, " +
+                        "user_type TEXT NOT NULL, " +
+                        "created_at TEXT NOT NULL);";
+
+                // Таблица филиалов
+                String sqlBranches = "CREATE TABLE IF NOT EXISTS branches (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        "name TEXT NOT NULL, " +
+                        "address TEXT NOT NULL);";
+
+                // Таблица врачей
+                String sqlDoctors = "CREATE TABLE IF NOT EXISTS doctors (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        "name TEXT NOT NULL, " +
+                        "specialization TEXT NOT NULL, " +
+                        "branch_id INTEGER NOT NULL, " +
+                        "FOREIGN KEY(branch_id) REFERENCES branches(id));";
+
+                // Таблица записей
+                String sqlAppointments = "CREATE TABLE IF NOT EXISTS appointments (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        "patient_username TEXT NOT NULL, " +
+                        "doctor_id INTEGER NOT NULL, " +
+                        "appointment_date TEXT NOT NULL, " +
+                        "start_time TEXT NOT NULL, " +
+                        "end_time TEXT NOT NULL, " +
+                        "secret_id TEXT NOT NULL, " +
+                        "status TEXT NOT NULL DEFAULT 'scheduled', " +
+                        "FOREIGN KEY(doctor_id) REFERENCES doctors(id));";
+
+                // Таблица расписания
+                String sqlSchedules = "CREATE TABLE IF NOT EXISTS schedules (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        "doctor_id INTEGER NOT NULL, " +
+                        "day_of_week TEXT NOT NULL, " +
+                        "start_time TEXT NOT NULL, " +
+                        "end_time TEXT NOT NULL, " +
+                        "FOREIGN KEY(doctor_id) REFERENCES doctors(id));";
+
+                stmt.execute(sqlUsers);
+                stmt.execute(sqlBranches);
+                stmt.execute(sqlDoctors);
+                stmt.execute(sqlAppointments);
+                stmt.execute(sqlSchedules);
+
+                // Тестовые данные
+                ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM users");
+                if (rs.getInt(1) == 0) {
+                    // Создаем тестового менеджера (для входа в систему)
+                    String managerPassword = hashPassword("manager123");
+                    stmt.execute("INSERT INTO users (username, password, user_type, created_at) VALUES " +
+                            "('m.shemelova', '" + managerPassword + "', 'MANAGER', datetime('now'))");
+
+                    // Создаем тестового врача (для входа в систему)
+                    String doctorPassword = hashPassword("doctor123");
+                    stmt.execute("INSERT INTO users (username, password, user_type, created_at) VALUES " +
+                            "('d.ivanov', '" + doctorPassword + "', 'DOCTOR', datetime('now'))");
+
+                    // Создаем тестовых пациентов (для входа в систему)
+                    String patientPassword = hashPassword("patient123");
+                    stmt.execute("INSERT INTO users (username, password, user_type, created_at) VALUES " +
+                            "('p.kotova', '" + patientPassword + "', 'PATIENT', datetime('now')), " +
+                            "('m.maskov', '" + patientPassword + "', 'PATIENT', datetime('now')), " +
+                            "('a.smirnova', '" + patientPassword + "', 'PATIENT', datetime('now')), " +
+                            "('v.petrov', '" + patientPassword + "', 'PATIENT', datetime('now'))");
+
+                    // Тестовые филиалы
+                    stmt.execute("INSERT INTO branches (name, address) VALUES " +
+                            "('Центральный филиал', 'г. Нижний Новогород, ул. Пушкина, д. 25'), " +
+                            "('Северный филиал', 'г. Нижний Новогород, ул. Горького, д. 120'), " +
+                            "('Южный филиал', 'г. Нижний Новогород, ул. Ленина, д. 85')");
+
+                    // Тестовые врачи
+                    stmt.execute("INSERT INTO doctors (name, specialization, branch_id) VALUES " +
+                            "('Иванов Иван Алексеевич', 'Кардиолог', 1), " + // Центральный
+                            "('Петрова Елена Васильевна', 'Невролог', 2), " + // Северный
+                            "('Сидоров Александр Викторович', 'Терапевт', 3), " + // Южный
+                            "('Кузнецова Ольга Сергеевна', 'Педиатр', 1), " + // Центральный
+                            "('Николаев Дмитрий Викторович', 'Хирург', 2)"); // Северный
+
+                    // Тестовое расписание
+                    stmt.execute("INSERT INTO schedules (doctor_id, day_of_week, start_time, end_time) VALUES " +
+                            "(1, 'Понедельник', '09:00', '17:00'), " +
+                            "(1, 'Среда', '09:00', '17:00'), " +
+                            "(2, 'Вторник', '10:00', '18:00'), " +
+                            "(2, 'Четверг', '10:00', '18:00'), " +
+                            "(3, 'Пятница', '08:00', '16:00'), " +
+                            "(4, 'Понедельник', '08:00', '16:00'), " +
+                            "(4, 'Вторник', '08:00', '16:00'), " +
+                            "(5, 'Среда', '09:00', '17:00')");
+
+                    // Тестовые записи к врачам
+                    stmt.execute("INSERT INTO appointments (patient_username, doctor_id, appointment_date, start_time, end_time, secret_id, status) VALUES " +
+                            "('p.kotova', 1, '2025-09-15', '10:00', '10:30', 'SEC001', 'completed'), " +
+                            "('m.maskov', 1, '2025-09-15', '12:00', '13:30', 'SEC002', 'completed'), " +
+                            "('a.smirnova', 1, '2025-09-17', '12:00', '13:30', 'SEC003', 'completed'), " +
+                            "('v.petrov', 1, '2025-09-17', '12:00', '13:30', 'SEC004', 'completed'), " +
+                            "('p.kotova', 2, '2025-09-16', '14:00', '14:30', 'SEC005', 'completed'), " +
+                            "('m.maskov', 2, '2025-09-16', '15:00', '15:30', 'SEC006', 'completed'), " +
+                            "('a.smirnova', 2, '2025-09-18', '12:00', '13:30', 'SEC007', 'completed'), " +
+                            "('v.petrov', 2, '2025-09-18', '15:00', '16:00', 'SEC008', 'completed'), " +
+                            "('p.kotova', 3, '2025-09-19', '10:00', '10:30', 'SEC009', 'completed'), " +
+                            "('m.maskov', 3, '2025-09-19', '11:00', '12:30', 'SEC010', 'completed'), " +
+                            "('a.smirnova', 3, '2025-09-19', '13:00', '14:00', 'SEC011', 'completed'), " +
+                            "('v.petrov', 3, '2025-09-19', '15:00', '16:00', 'SEC012', 'completed'), " +
+                            "('p.kotova', 4, '2025-09-22', '14:00', '15:00', 'SEC013', 'completed'), " +
+                            "('m.maskov', 5, '2025-09-17', '14:00', '15:00', 'SEC014', 'completed'), " +
+                            "('a.smirnova', 4, '2025-09-29', '10:00', '11:00', 'SEC015', 'completed'), " +
+                            "('v.petrov', 3, '2025-12-12', '15:00', '16:00', 'SEC012', 'scheduled'), " +
+                            "('p.kotova', 4, '2025-12-29', '14:00', '15:00', 'SEC013', 'scheduled'), " +
+                            "('m.maskov', 5, '2025-12-10', '14:00', '15:00', 'SEC014', 'scheduled') ");
+                }
+
+                System.out.println("База данных инициализирована успешно.");
+            }
+        } catch (SQLException e) {
+            System.err.println("Ошибка инициализации БД: " + e.getMessage());
+        }
+    }
+
+    public static Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(DB_URL);
+    }
+
+    // Метод для хеширования пароля
+    public static String hashPassword(String password) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(password.getBytes());
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hash) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Ошибка хеширования пароля", e);
+        }
+    }
+}

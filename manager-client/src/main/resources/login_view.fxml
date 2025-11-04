@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.paint.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17.0.2-ea"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.supermed.LoginController"
+      alignment="CENTER"
+      spacing="20.0"
+      style="-fx-background-color: linear-gradient(to bottom, #667eea, #764ba2);">
+
+    <padding>
+        <Insets bottom="40.0" left="40.0" right="40.0" top="40.0" />
+    </padding>
+
+    <!-- Заголовок -->
+    <VBox alignment="CENTER" spacing="10.0">
+        <Label text="🏥" style="-fx-font-size: 48px;"/>
+        <Label text="SuperMed"
+               style="-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: white;"/>
+        <Label text="Медицинская система"
+               style="-fx-font-size: 14px; -fx-text-fill: #e8e8e8;"/>
+    </VBox>
+
+    <!-- Форма входа -->
+    <VBox spacing="15.0" style="-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 30; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 10, 0, 0, 0);">
+        <Label text="Вход в систему"
+               style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+
+        <VBox spacing="10.0">
+            <Label text="Имя пользователя"
+                   style="-fx-font-weight: bold; -fx-text-fill: #34495e;"/>
+            <TextField fx:id="usernameField"
+                       promptText="Введите имя пользователя"
+                       style="-fx-background-radius: 8; -fx-border-radius: 8; -fx-padding: 10;"/>
+        </VBox>
+
+        <VBox spacing="10.0">
+            <Label text="Пароль"
+                   style="-fx-font-weight: bold; -fx-text-fill: #34495e;"/>
+            <PasswordField fx:id="passwordField"
+                           promptText="Введите пароль"
+                           style="-fx-background-radius: 8; -fx-border-radius: 8; -fx-padding: 10;"/>
+        </VBox>
+
+        <VBox spacing="10.0">
+            <Label text="Тип пользователя"
+                   style="-fx-font-weight: bold; -fx-text-fill: #34495e;"/>
+            <ComboBox fx:id="userTypeCombo"
+                      style="-fx-background-radius: 8; -fx-border-radius: 8;"/>
+        </VBox>
+
+        <Button fx:id="loginButton"
+                text="Войти"
+                onAction="#handleLogin"
+                style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px;"/>
+
+        <Button fx:id="registerButton"
+                text="Зарегистрироваться"
+                onAction="#handleRegister"
+                style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 12; -fx-font-size: 14px;"/>
+
+        <Label fx:id="statusLabel"
+               style="-fx-text-fill: #e74c3c; -fx-font-weight: bold; -fx-wrap-text: true;"/>
+    </VBox>
+
+    <!-- Тестовые данные -->
+    <VBox spacing="5.0" style="-fx-background-color: rgba(255,255,255,0.1); -fx-background-radius: 8; -fx-padding: 15;">
+        <Label text="Тестовые данные:"
+               style="-fx-font-weight: bold; -fx-text-fill: white;"/>
+        <Label text="Менеджер: m.shemelova / manager123"
+               style="-fx-text-fill: #e8e8e8; -fx-font-size: 11px;"/>
+        <Label text="Врач: d.ivanov / doctor123"
+               style="-fx-text-fill: #e8e8e8; -fx-font-size: 11px;"/>
+        <Label text="Пациент: p.kotova / patient123"
+               style="-fx-text-fill: #e8e8e8; -fx-font-size: 11px;"/>
+    </VBox>
+</VBox>

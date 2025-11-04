@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.effect.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="15.0" style="-fx-background-color: linear-gradient(to bottom, #f8f9fa, #e9ecef);" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.supermed.ManagerController">
+    <HBox alignment="CENTER_LEFT" spacing="10.0" style="-fx-padding: 0 0 10 0;">
+        <Label fx:id="userInfoLabel" style="-fx-text-fill: #7f8c8d; -fx-font-weight: bold;" text="Пользователь: Не авторизован" />
+        <Region HBox.hgrow="ALWAYS" />
+        <Button onAction="#handleLogout" style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 5 10;" text="🚪 Выход" />
+    </HBox>
+
+    <!-- Заголовок с иконкой -->
+    <HBox alignment="CENTER_LEFT" spacing="15.0">
+        <Label style="-fx-font-size: 28px;" text="🏥" />
+        <VBox spacing="2.0">
+            <Label style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;" text="SuperMed Manager" />
+            <Label style="-fx-font-size: 12px; -fx-text-fill: #7f8c8d;" text="Панель управления медицинским учреждением" />
+        </VBox>
+    </HBox>
+
+    <!-- Основные вкладки -->
+    <TabPane style="-fx-background-color: white; -fx-background-radius: 10; -fx-border-radius: 10;" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
+
+        <effect>
+            <DropShadow color="rgba(0,0,0,0.1)" radius="10.0" />
+        </effect>
+
+        <!-- Вкладка статистики -->
+        <Tab text="📊 Статистика врачей">
+            <content>
+                <VBox spacing="15.0" style="-fx-padding: 20;">
+                    <!-- Панель управления и фильтры -->
+                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                        <Button fx:id="loadStatsBtn" onAction="#loadStatistics" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 8 15;" text="📈 Обновить отчет" />
+                        <Label fx:id="statsCount" style="-fx-text-fill: #7f8c8d; -fx-font-style: italic;" text="Всего записей: 0" />
+                        <!-- Фильтр по врачу -->
+                        <ComboBox fx:id="doctorFilterComboBox" promptText="Фильтр по врачу" HBox.hgrow="ALWAYS" />
+                        <!-- Фильтр по филиалу -->
+                        <ComboBox fx:id="branchFilterComboBox" promptText="Фильтр по филиалу" HBox.hgrow="ALWAYS" />
+                        <!-- Фильтр по периоду -->
+                        <Label text="С:" />
+                        <DatePicker fx:id="startDatePicker" promptText="Начальная дата" />
+                        <Label text="По:" />
+                        <DatePicker fx:id="endDatePicker" promptText="Конечная дата" />
+                    </HBox>
+                    <!-- Таблица детальных приемов -->
+                    <TableView fx:id="statisticsTable" style="-fx-background-radius: 8; -fx-border-radius: 8; -fx-border-color: #bdc3c7;" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="colAppointmentDate" prefWidth="120" text="📅 Дата приема" />
+                            <TableColumn fx:id="colDoctorName" prefWidth="180" style="-fx-background-color: #ecf0f1; -fx-font-weight: bold;" text="👨‍⚕️ ФИО Врача" />
+                            <TableColumn fx:id="colDoctorSpecialization" prefWidth="150" text="🎯 Специализация" />
+                            <TableColumn fx:id="colBranchName" prefWidth="150" text="🏢 Филиал" />
+                            <TableColumn fx:id="colDoctorSchedule" prefWidth="180" text="🗓️ Расписание врача" />
+                            <TableColumn fx:id="colStartTime" prefWidth="80" text="🕐 Начало приема" />
+                            <TableColumn fx:id="colEndTime" prefWidth="80" text="🕔 Конец приема" />
+                        </columns>
+                    </TableView>
+                </VBox>
+            </content>
+        </Tab>
+
+        <!-- Вкладка расписания -->
+        <Tab text="📅 Управление расписанием">
+            <content>
+                <VBox spacing="15.0" style="-fx-padding: 20;">
+                    <!-- Панель управления расписанием -->
+                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                        <Button fx:id="addScheduleBtn" onAction="#showAddScheduleDialog" style="-fx-background-color: #9b59b6; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 8 15;" text="➕ Добавить запись" />
+                        <Label fx:id="scheduleCount" style="-fx-text-fill: #7f8c8d; -fx-font-style: italic;" text="Записей в расписании: 0" />
+                    </HBox>
+
+                    <!-- Таблица расписания -->
+                    <TableView fx:id="scheduleTable" style="-fx-background-radius: 8; -fx-border-radius: 8; -fx-border-color: #bdc3c7;" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="colScheduleDoctor" prefWidth="180" text="👨‍⚕️ Врач" />
+                            <TableColumn fx:id="colScheduleDay" prefWidth="120" text="📅 День недели" />
+                            <TableColumn fx:id="colScheduleStart" prefWidth="100" text="🕐 Начало" />
+                            <TableColumn fx:id="colScheduleEnd" prefWidth="100" text="🕔 Конец" />
+                            <TableColumn fx:id="colScheduleHours" prefWidth="80" text="⏱️ Часы" />
+                            <TableColumn fx:id="colScheduleActions" prefWidth="150" text="⚙️ Действия" />
+                        </columns>
+                    </TableView>
+                </VBox>
+            </content>
+        </Tab>
+
+    </TabPane>
+
+    <!-- Нижний колонтитул -->
+    <HBox alignment="CENTER_RIGHT" spacing="10.0" style="-fx-padding: 10 0 0 0;">
+        <Label style="-fx-text-fill: #95a5a6; -fx-font-size: 11px;" text="💚 SuperMed v1.0" />
+        <Label fx:id="statusLabel" style="-fx-text-fill: #27ae60; -fx-font-size: 11px; -fx-font-weight: bold;" text="Готов к работе" />
+    </HBox>
+    <padding>
+        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+    </padding>
+
+</VBox>

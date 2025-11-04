@@ -1,3 +1,43 @@
 # SuperMed
 
 Ссылка: https://drive.google.com/drive/folders/1J7zxVv32QNCsdRdEYgtj_erHAJFFJEaY?usp=sharing
+
+## Как запустить проект
+
+1. Клонируйте репозиторий
+
+```sh
+git clone https://github.com/dasha1112/SuperMed.git
+```
+
+2. Откройте в Intelli IDEA папку supermed-server и запустите сервер с помощью файла Main (кликните на файл Main правой кнопкой мыши и в всплывшем окне выберите Run Main.main())
+Если все запуститлось корректно, то в терминале должно вывести следующее:
+```
+SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+База данных инициализирована успешно.
+Сервер SuperMed запущен на http://localhost:4567
+```
+
+3. Далее, в новом окне Intelli IDEA откройте папку manager-client и настройте конфигурацию для ManagerClient следующим обраом:
+* В верхнем меню выберите Run → Edit Configurations...
+* Найдите конфигурацию для ManagerClient (или создайте новую)
+* В поле VM options добавьте:
+```sh
+--module-path "C:\path\to\javafx-sdk-17.0.6\lib" --add-modules javafx.controls,javafx.fxml
+```
+
+Пример как это должно выглядеть:
+![configuration](./Instructions/Configurations.PNG)
+
+Также проверьте есть ли у вас все зависимости указанные в файле pom.xml . Если каких-то нет, то необходимо будет их доустановить. Если у вас возникла следующая ошибка:
+```
+Error: JavaFX runtime components are missing, and are required to run this application
+```
+то вы неправильно настроили конфигурацию или недоустановили некоторые пакеты, поэтому удостоверьтесь, что выполнили выше описанные шаги корректно.
+
+Если все заработало корректно, то у вас должно появиться окно входа, которое выглядит следующим образом:
+![Loggin](./Instructions/Loggin.PNG)
+
+Описание, всех классов и проекта в целом, а также рекомендации по работе с ним находятся в файле Instructions/Code.docx , советую с ним ознакомиться.
