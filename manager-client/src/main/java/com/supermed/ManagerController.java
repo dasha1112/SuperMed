@@ -24,9 +24,12 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.URL;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import javafx.scene.control.ComboBox;
+import javafx.util.StringConverter;
 
 public class ManagerController implements Initializable {
 
@@ -35,11 +38,21 @@ public class ManagerController implements Initializable {
     private final Gson gson = new Gson();
 
     // Элементы интерфейса
-    @FXML private TableView<Statistics> statisticsTable;
+    @FXML private TableView<DetailedAppointment> statisticsTable;
     @FXML private TableColumn<Statistics, String> colDoctorName;
     @FXML private TableColumn<Statistics, String> colSpecialization;
-    @FXML private TableColumn<Statistics, String> colBranch;
+    @FXML private TableColumn<Statistics, String> colBranchName;
+    @FXML private TableColumn<Appointment, String> colAppointmentDate;
+    @FXML private TableColumn<Appointment, String> colStartTime;
+    @FXML private TableColumn<Appointment, String> colEndTime;
+    @FXML private TableColumn<DetailedAppointment, String> colDoctorSpecialization;
+    @FXML private ComboBox<Doctor> doctorFilterComboBox;
+    @FXML private ComboBox<Branch> branchFilterComboBox;
+    @FXML private TextField searchField;
+    @FXML private DatePicker startDatePicker;
+    @FXML private DatePicker endDatePicker;
     @FXML private TableColumn<Statistics, Integer> colAppointmentCount;
+    @FXML private TableColumn<DetailedAppointment, String> colDoctorSchedule; // НОВАЯ КОЛОНКА
     @FXML private Label statsCount;
     @FXML private Button loadStatsBtn;
 
@@ -58,27 +71,85 @@ public class ManagerController implements Initializable {
     @FXML private Label statusLabel;
     @FXML private Label userInfoLabel;
 
+
     // Данные для таблиц
-    private ObservableList<Statistics> statisticsData = FXCollections.observableArrayList();
+    private ObservableList<DetailedAppointment> allAppointmentsData = FXCollections.observableArrayList();
+    private ObservableList<Doctor> doctorsFilterData = FXCollections.observableArrayList();
+    private ObservableList<Branch> branchesFilterData = FXCollections.observableArrayList();
     private ObservableList<Schedule> scheduleData = FXCollections.observableArrayList();
     private ObservableList<Doctor> doctorsData = FXCollections.observableArrayList();
 
     // Текущий пользователь
     private User currentUser;
 
-    @Override
-    public void initialize(URL location, ResourceBundle resources) {
-        setupStatisticsTable();
-        setupScheduleTable();
-        updateStatus("Готов к работе", "success");
-        loadDoctors();
-        refreshSchedules();
-
-        // Показываем информацию о пользователе
-        if (currentUser != null) {
-            userInfoLabel.setText("Пользователь: " + currentUser.getUsername() + " (" + getUserTypeDisplayName(currentUser.getUserType()) + ")");
+//    @Override
+//    public void initialize(URL location, ResourceBundle resources) {
+//        setupStatisticsTable();
+//        setupScheduleTable();
+//        updateStatus("Готов к работе", "success");
+//        //loadDoctors();
+//        refreshSchedules();
+//
+//        // Добавляем слушателей для полей фильтрации, чтобы обновлять статистику
+//        searchField.textProperty().addListener((obs, oldVal, newVal) -> loadStatistics());
+//        startDatePicker.valueProperty().addListener((obs, oldVal, newVal) -> loadStatistics());
+//        endDatePicker.valueProperty().addListener((obs, oldVal, newVal) -> loadStatistics());
+//        // Показываем информацию о пользователе
+//        if (currentUser != null) {
+//            userInfoLabel.setText("Пользователь: " + currentUser.getUsername() + " (" + getUserTypeDisplayName(currentUser.getUserType()) + ")");
+//        }
+//    }
+@Override
+public void initialize(URL location, ResourceBundle resources) {
+    setupStatisticsTable();
+    setupScheduleTable();
+    updateStatus("Готов к работе", "success");
+    // loadDoctors(); // Этот метод теперь не нужен, loadDoctorsFilter() загрузит данные для ComboBox
+    // loadBranches(); // Нужно будет вызвать для загрузки филиалов
+    refreshSchedules();
+    // Загружаем данные для ComboBox'ов фильтрации
+    loadDoctorsForFilter();
+    loadBranchesForFilter();
+    // Настройка ComboBox'ов для отображения объектов
+    doctorFilterComboBox.setConverter(new StringConverter<Doctor>() {
+        @Override
+        public String toString(Doctor doctor) {
+            return doctor != null ? doctor.getName() + " (" + doctor.getSpecialization() + ")" : "";
         }
+        @Override
+        public Doctor fromString(String string) {
+            return null; // Не используется для этого ComboBox
+        }
+    });
+    doctorFilterComboBox.setItems(doctorsFilterData);
+    // Добавляем опцию "Все врачи"
+    doctorsFilterData.add(0, null); // null будет представлять "Все врачи"
+    branchFilterComboBox.setConverter(new StringConverter<Branch>() {
+        @Override
+        public String toString(Branch branch) {
+            return branch != null ? branch.getName() + " (" + branch.getAddress() + ")" : "";
+        }
+        @Override
+        public Branch fromString(String string) {
+            return null; // Не используется
+        }
+    });
+    branchFilterComboBox.setItems(branchesFilterData);
+    // Добавляем опцию "Все филиалы"
+    branchesFilterData.add(0, null); // null будет представлять "Все филиалы"
+    // Добавляем слушателей для полей фильтрации, чтобы обновлять статистику
+    doctorFilterComboBox.valueProperty().addListener((obs, oldVal, newVal) -> loadStatistics());
+    branchFilterComboBox.valueProperty().addListener((obs, oldVal, newVal) -> loadStatistics());
+    startDatePicker.valueProperty().addListener((obs, oldVal, newVal) -> loadStatistics());
+    endDatePicker.valueProperty().addListener((obs, oldVal, newVal) -> loadStatistics());
+    // Загружаем статистику при инициализации
+    loadStatistics();
+    // Показываем информацию о пользователе
+    if (currentUser != null) {
+        userInfoLabel.setText("Пользователь: " + currentUser.getUsername() + " (" + getUserTypeDisplayName(currentUser.getUserType()) + ")");
     }
+}
+
 
     // Метод для установки текущего пользователя (вызывается из LoginController)
     public void setCurrentUser(User user) {
@@ -98,34 +169,63 @@ public class ManagerController implements Initializable {
     }
 
     private void setupStatisticsTable() {
+//        colAppointmentDate.setCellValueFactory(new PropertyValueFactory<>("appointmentDate"));
+//        colDoctorName.setCellValueFactory(new PropertyValueFactory<>("doctorName"));
+//        colDoctorSpecialization.setCellValueFactory(new PropertyValueFactory<>("doctorSpecialization"));
+//        colBranchName.setCellValueFactory(new PropertyValueFactory<>("branchName"));
+//        colDoctorSchedule.setCellValueFactory(new PropertyValueFactory<>("formattedDoctorSchedule"));
+//        colStartTime.setCellValueFactory(new PropertyValueFactory<>("startTime"));
+//        colEndTime.setCellValueFactory(new PropertyValueFactory<>("endTime"));
+//        statisticsTable.setItems(allAppointmentsData);
+        colAppointmentDate.setCellValueFactory(new PropertyValueFactory<>("appointmentDate"));
         colDoctorName.setCellValueFactory(new PropertyValueFactory<>("doctorName"));
-        colSpecialization.setCellValueFactory(new PropertyValueFactory<>("specialization"));
-        colBranch.setCellValueFactory(new PropertyValueFactory<>("branch"));
-        colAppointmentCount.setCellValueFactory(new PropertyValueFactory<>("appointmentCount"));
-
-        // Подсветка ячеек с количеством записей
-        colAppointmentCount.setCellFactory(column -> new TableCell<Statistics, Integer>() {
-            @Override
-            protected void updateItem(Integer item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                    setStyle("");
-                } else {
-                    setText(item.toString());
-                    if (item > 15) {
-                        setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
-                    } else if (item > 8) {
-                        setStyle("-fx-text-fill: #f39c12; -fx-font-weight: bold;");
-                    } else {
-                        setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold;");
-                    }
-                }
-            }
-        });
-
-        statisticsTable.setItems(statisticsData);
+        colDoctorSpecialization.setCellValueFactory(new PropertyValueFactory<>("doctorSpecialization"));
+        colBranchName.setCellValueFactory(new PropertyValueFactory<>("branchName"));
+        colDoctorSchedule.setCellValueFactory(new PropertyValueFactory<>("formattedDoctorSchedule"));
+        colStartTime.setCellValueFactory(new PropertyValueFactory<>("startTime"));
+        colEndTime.setCellValueFactory(new PropertyValueFactory<>("endTime"));
+        statisticsTable.setItems(allAppointmentsData);
     }
+    private void loadDoctorsForFilter() {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(BASE_URL + "/doctors"))
+                    .GET()
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200) {
+                Type doctorListType = new TypeToken<List<Doctor>>(){}.getType();
+                List<Doctor> doctors = gson.fromJson(response.body(), doctorListType);
+                doctorsFilterData.clear();
+                doctorsFilterData.addAll(doctors);
+                // Добавляем "Все врачи" после загрузки
+                doctorsFilterData.add(0, null);
+            }
+        } catch (IOException | InterruptedException e) {
+            System.err.println("Ошибка при загрузке списка врачей для фильтрации: " + e.getMessage());
+        }
+    }
+    // НОВЫЙ МЕТОД для загрузки филиалов для фильтрации
+    private void loadBranchesForFilter() {
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(BASE_URL + "/branches"))
+                    .GET()
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200) {
+                Type branchListType = new TypeToken<List<Branch>>(){}.getType();
+                List<Branch> branches = gson.fromJson(response.body(), branchListType);
+                branchesFilterData.clear();
+                branchesFilterData.addAll(branches);
+                // Добавляем "Все филиалы" после загрузки
+                branchesFilterData.add(0, null);
+            }
+        } catch (IOException | InterruptedException e) {
+            System.err.println("Ошибка при загрузке списка филиалов для фильтрации: " + e.getMessage());
+        }
+    }
+
 
     private void setupScheduleTable() {
         colScheduleDoctor.setCellValueFactory(new PropertyValueFactory<>("doctorName"));
@@ -228,41 +328,56 @@ public class ManagerController implements Initializable {
     }
 
     @FXML
-    private void loadStatistics() {
-        // Проверяем права доступа
+    private void loadStatistics() { // Этот метод теперь будет принимать параметры фильтрации
         if (currentUser != null && !currentUser.getUserType().equals("MANAGER")) {
-            showAlert("Ошибка доступа", "Только менеджеры могут просматривать статистику", "ERROR");
+            showAlert("Ошибка доступа", "Только менеджеры могут просматривать детальный отчет по приемам", "ERROR");
             return;
         }
-
-        updateStatus("Загрузка статистики...", "info");
-
+        updateStatus("Загрузка детального отчета по приемам...", "info");
         try {
+            StringBuilder urlBuilder = new StringBuilder(BASE_URL + "/statistics?");
+            // Параметр для врача
+            Doctor selectedDoctor = doctorFilterComboBox.getSelectionModel().getSelectedItem();
+            if (selectedDoctor != null) {
+                urlBuilder.append("doctorId=").append(selectedDoctor.getId()).append("&");
+            }
+            // Параметр для филиала
+            Branch selectedBranch = branchFilterComboBox.getSelectionModel().getSelectedItem();
+            if (selectedBranch != null) {
+                urlBuilder.append("branchId=").append(selectedBranch.getId()).append("&");
+            }
+            // Добавляем параметры диапазона дат
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            if (startDatePicker.getValue() != null) {
+                urlBuilder.append("startDate=").append(startDatePicker.getValue().format(dateFormatter)).append("&");
+            }
+            if (endDatePicker.getValue() != null) {
+                urlBuilder.append("endDate=").append(endDatePicker.getValue().format(dateFormatter)).append("&");
+            }
+            String finalUrl = urlBuilder.toString();
+            if (finalUrl.endsWith("&")) {
+                finalUrl = finalUrl.substring(0, finalUrl.length() - 1);
+            }
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(BASE_URL + "/statistics"))
+                    .uri(URI.create(finalUrl))
                     .GET()
                     .build();
-
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-
             if (response.statusCode() == 200) {
-                Type statisticsListType = new TypeToken<List<Statistics>>(){}.getType();
-                List<Statistics> statistics = gson.fromJson(response.body(), statisticsListType);
-
-                statisticsData.clear();
-                statisticsData.addAll(statistics);
-
-                statsCount.setText("Врачей в статистике: " + statistics.size());
-                updateStatus("Загружена статистика по " + statistics.size() + " врачам", "success");
-
-                showAlert("Успех", "Загружена статистика по " + statistics.size() + " врачам", "INFO");
+                Type detailedAppointmentListType = new TypeToken<List<DetailedAppointment>>(){}.getType();
+                List<DetailedAppointment> detailedAppointments = gson.fromJson(response.body(), detailedAppointmentListType);
+                allAppointmentsData.clear();
+                allAppointmentsData.addAll(detailedAppointments);
+                statsCount.setText("Всего записей: " + detailedAppointments.size());
+                updateStatus("Загружен детальный отчет по " + detailedAppointments.size() + " записям", "success");
             } else {
                 updateStatus("Ошибка загрузки: " + response.statusCode(), "error");
-                showAlert("Ошибка", "Не удалось загрузить статистику", "ERROR");
+                showAlert("Ошибка", "Не удалось загрузить детальный отчет по приемам", "ERROR");
             }
         } catch (IOException | InterruptedException e) {
             updateStatus("Ошибка подключения", "error");
             showAlert("Ошибка", "Не удалось подключиться к серверу", "ERROR");
+            System.err.println("Ошибка при загрузке детального отчета по приемам: " + e.getMessage());
         }
     }
 

@@ -55,8 +55,20 @@ public class Controller {
         });
 
         get("/statistics", (req, res) -> {
-            List<Statistics> stats = model.getStatistics();
-            return gson.toJson(stats);
+            res.type("application/json");
+            // Получаем параметры запроса
+            Integer doctorId = null;
+            if (req.queryParams("doctorId") != null && !req.queryParams("doctorId").isEmpty()) {
+                doctorId = Integer.parseInt(req.queryParams("doctorId"));
+            }
+            Integer branchId = null;
+            if (req.queryParams("branchId") != null && !req.queryParams("branchId").isEmpty()) {
+                branchId = Integer.parseInt(req.queryParams("branchId"));
+            }
+            String startDate = req.queryParams("startDate");
+            String endDate = req.queryParams("endDate");
+            List<DetailedAppointment> detailedAppointments = model.getDetailedAppointmentsReport(doctorId, branchId, startDate, endDate);
+            return gson.toJson(detailedAppointments);
         });
 
         get("/schedules", (req, res) -> {

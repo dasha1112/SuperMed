@@ -127,7 +127,9 @@ public class Model {
                         rs.getInt("id"),
                         rs.getString("patient_username"),
                         rs.getInt("doctor_id"),
-                        rs.getString("appointment_time"),
+                        rs.getString("appointment_date"),
+                        rs.getString("start_time"),
+                        rs.getString("end_time"),
                         rs.getString("secret_id"),
                         rs.getString("status"),
                         rs.getString("doctor_name")
@@ -139,18 +141,116 @@ public class Model {
         }
         return appointments;
     }
-
+    public List<DetailedAppointment> getDetailedAppointmentsReport(Integer doctorId, Integer branchId, String startDate, String endDate) { // Обновленные параметры
+        List<DetailedAppointment> detailedAppointments = new ArrayList<>();
+        StringBuilder sqlBuilder = new StringBuilder(
+                "SELECT a.id, a.patient_username, a.doctor_id, a.appointment_date, " +
+                        "a.start_time, a.end_time, a.secret_id, a.status, " +
+                        "d.name AS doctor_name, d.specialization AS doctor_specialization, " +
+                        "b.name AS branch_name, b.address AS branch_address, " +
+                        "s.day_of_week AS doctor_schedule_day_of_week, " +
+                        "s.start_time AS doctor_schedule_start_time, " +
+                        "s.end_time AS doctor_schedule_end_time " +
+                        "FROM appointments a " +
+                        "JOIN doctors d ON a.doctor_id = d.id " +
+                        "JOIN branches b ON d.branch_id = b.id " +
+                        "LEFT JOIN schedules s ON d.id = s.doctor_id AND s.day_of_week = " +
+                        "    CASE strftime('%w', a.appointment_date) " +
+                        "        WHEN '0' THEN 'Воскресенье' " +
+                        "        WHEN '1' THEN 'Понедельник' " +
+                        "        WHEN '2' THEN 'Вторник' " +
+                        "        WHEN '3' THEN 'Среда' " +
+                        "        WHEN '4' THEN 'Четверг' " +
+                        "        WHEN '5' THEN 'Пятница' " +
+                        "        WHEN '6' THEN 'Суббота' " +
+                        "    END "
+        );
+        List<Object> params = new ArrayList<>();
+        boolean hasWhere = false;
+        // Фильтр по врачу
+        if (doctorId != null) {
+            sqlBuilder.append(" WHERE d.id = ?");
+            params.add(doctorId);
+            hasWhere = true;
+        }
+        // Фильтр по филиалу
+        if (branchId != null) {
+            if (!hasWhere) {
+                sqlBuilder.append(" WHERE ");
+                hasWhere = true;
+            } else {
+                sqlBuilder.append(" AND ");
+            }
+            sqlBuilder.append("b.id = ?");
+            params.add(branchId);
+        }
+        // Фильтр по датам (остается без изменений)
+        if (startDate != null && !startDate.trim().isEmpty()) {
+            if (!hasWhere) {
+                sqlBuilder.append(" WHERE ");
+                hasWhere = true;
+            } else {
+                sqlBuilder.append(" AND ");
+            }
+            sqlBuilder.append("a.appointment_date >= ?");
+            params.add(startDate.trim());
+        }
+        if (endDate != null && !endDate.trim().isEmpty()) {
+            if (!hasWhere) {
+                sqlBuilder.append(" WHERE ");
+                hasWhere = true;
+            } else {
+                sqlBuilder.append(" AND ");
+            }
+            sqlBuilder.append("a.appointment_date <= ?");
+            params.add(endDate.trim());
+        }
+        sqlBuilder.append(" ORDER BY a.appointment_date DESC, a.start_time DESC");
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sqlBuilder.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                pstmt.setObject(i + 1, params.get(i));
+            }
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    DetailedAppointment detailedAppointment = new DetailedAppointment(
+                            rs.getInt("id"),
+                            rs.getString("patient_username"),
+                            rs.getInt("doctor_id"),
+                            rs.getString("appointment_date"),
+                            rs.getString("start_time"),
+                            rs.getString("end_time"),
+                            rs.getString("secret_id"),
+                            rs.getString("status"),
+                            rs.getString("doctor_name"),
+                            rs.getString("doctor_specialization"),
+                            rs.getString("branch_name"),
+                            rs.getString("branch_address"),
+                            rs.getString("doctor_schedule_day_of_week"),
+                            rs.getString("doctor_schedule_start_time"),
+                            rs.getString("doctor_schedule_end_time")
+                    );
+                    detailedAppointments.add(detailedAppointment);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Ошибка при получении детального отчета по записям: " + e.getMessage());
+        }
+        return detailedAppointments;
+    }
 
     public boolean createAppointment(Appointment appointment) {
-        String sql = "INSERT INTO appointments (patient_username, doctor_id, appointment_time, secret_id) VALUES (?, ?, ?, ?)"; // ИЗМЕНЕНО
+        String sql = "INSERT INTO appointments (patient_username, doctor_id, appointment_date, start_time, end_time, secret_id) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            pstmt.setString(1, appointment.getPatientUsername()); // ИЗМЕНЕНО
+            pstmt.setString(1, appointment.getPatientUsername());
             pstmt.setInt(2, appointment.getDoctorId());
-            pstmt.setString(3, appointment.getAppointmentTime());
-            pstmt.setString(4, appointment.getSecretId());
+            pstmt.setString(3, appointment.getAppointmentDate());
+            pstmt.setString(4, appointment.getStartTime());
+            pstmt.setString(5, appointment.getEndTime());
+            pstmt.setString(6, appointment.getSecretId());
 
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -164,7 +264,7 @@ public class Model {
         String sql = "SELECT a.*, d.name as doctor_name FROM appointments a " +
                 "JOIN doctors d ON a.doctor_id = d.id " +
                 "WHERE a.patient_username = ? " +
-                "ORDER BY a.appointment_time DESC";
+                "ORDER BY a.appointment_date DESC, a.start_time DESC";
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -173,11 +273,14 @@ public class Model {
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
+                // ИЗМЕНИТЬ создание объекта Appointment с новыми полями
                 Appointment appointment = new Appointment(
                         rs.getInt("id"),
                         rs.getString("patient_username"),
                         rs.getInt("doctor_id"),
-                        rs.getString("appointment_time"),
+                        rs.getString("appointment_date"),
+                        rs.getString("start_time"),
+                        rs.getString("end_time"),
                         rs.getString("secret_id"),
                         rs.getString("status"),
                         rs.getString("doctor_name")

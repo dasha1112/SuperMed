@@ -32,19 +32,30 @@
         <Tab text="📊 Статистика врачей">
             <content>
                 <VBox spacing="15.0" style="-fx-padding: 20;">
-                    <!-- Панель управления статистикой -->
+                    <!-- Панель управления и фильтры -->
                     <HBox alignment="CENTER_LEFT" spacing="10.0">
-                        <Button fx:id="loadStatsBtn" onAction="#loadStatistics" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 8 15;" text="📈 Обновить статистику" />
-                        <Label fx:id="statsCount" style="-fx-text-fill: #7f8c8d; -fx-font-style: italic;" text="Врачей в статистике: 0" />
+                        <Button fx:id="loadStatsBtn" onAction="#loadStatistics" style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 8 15;" text="📈 Обновить отчет" />
+                        <Label fx:id="statsCount" style="-fx-text-fill: #7f8c8d; -fx-font-style: italic;" text="Всего записей: 0" />
+                        <!-- Фильтр по врачу -->
+                        <ComboBox fx:id="doctorFilterComboBox" promptText="Фильтр по врачу" HBox.hgrow="ALWAYS" />
+                        <!-- Фильтр по филиалу -->
+                        <ComboBox fx:id="branchFilterComboBox" promptText="Фильтр по филиалу" HBox.hgrow="ALWAYS" />
+                        <!-- Фильтр по периоду -->
+                        <Label text="С:" />
+                        <DatePicker fx:id="startDatePicker" promptText="Начальная дата" />
+                        <Label text="По:" />
+                        <DatePicker fx:id="endDatePicker" promptText="Конечная дата" />
                     </HBox>
-
-                    <!-- Таблица статистики -->
+                    <!-- Таблица детальных приемов -->
                     <TableView fx:id="statisticsTable" style="-fx-background-radius: 8; -fx-border-radius: 8; -fx-border-color: #bdc3c7;" VBox.vgrow="ALWAYS">
                         <columns>
-                            <TableColumn fx:id="colDoctorName" prefWidth="180" style="-fx-background-color: #ecf0f1; -fx-font-weight: bold;" text="👨‍⚕️ Врач" />
-                            <TableColumn fx:id="colSpecialization" prefWidth="150" text="🎯 Специализация" />
-                            <TableColumn fx:id="colBranch" prefWidth="150" text="🏢 Филиал" />
-                            <TableColumn fx:id="colAppointmentCount" prefWidth="150" text="📋 Количество записей" />
+                            <TableColumn fx:id="colAppointmentDate" prefWidth="120" text="📅 Дата приема" />
+                            <TableColumn fx:id="colDoctorName" prefWidth="180" style="-fx-background-color: #ecf0f1; -fx-font-weight: bold;" text="👨‍⚕️ ФИО Врача" />
+                            <TableColumn fx:id="colDoctorSpecialization" prefWidth="150" text="🎯 Специализация" />
+                            <TableColumn fx:id="colBranchName" prefWidth="150" text="🏢 Филиал" />
+                            <TableColumn fx:id="colDoctorSchedule" prefWidth="180" text="🗓️ Расписание врача" />
+                            <TableColumn fx:id="colStartTime" prefWidth="80" text="🕐 Начало приема" />
+                            <TableColumn fx:id="colEndTime" prefWidth="80" text="🕔 Конец приема" />
                         </columns>
                     </TableView>
                 </VBox>

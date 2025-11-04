@@ -39,7 +39,9 @@ public class DatabaseManager {
                         "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
                         "patient_username TEXT NOT NULL, " +
                         "doctor_id INTEGER NOT NULL, " +
-                        "appointment_time TEXT NOT NULL, " +
+                        "appointment_date TEXT NOT NULL, " +      // НОВОЕ: Дата записи
+                        "start_time TEXT NOT NULL, " +           // НОВОЕ: Время начала
+                        "end_time TEXT NOT NULL, " +             // НОВОЕ: Время окончания
                         "secret_id TEXT NOT NULL, " +
                         "status TEXT NOT NULL DEFAULT 'scheduled', " +
                         "FOREIGN KEY(doctor_id) REFERENCES doctors(id));";
@@ -54,7 +56,7 @@ public class DatabaseManager {
                         "FOREIGN KEY(doctor_id) REFERENCES doctors(id));";
 
                 stmt.execute(sqlUsers);
-                stmt.execute(sqlBranches); // НОВАЯ ТАБЛИЦА
+                stmt.execute(sqlBranches);
                 stmt.execute(sqlDoctors);
                 stmt.execute(sqlAppointments);
                 stmt.execute(sqlSchedules);
@@ -106,22 +108,25 @@ public class DatabaseManager {
                             "(5, 'Среда', '09:00', '17:00')");
 
                     // Тестовые записи к врачам
-                    stmt.execute("INSERT INTO appointments (patient_username, doctor_id, appointment_time, secret_id, status) VALUES " +
-                            "('p.kotova', 1, '2024-01-15 10:00:00', 'SEC001', 'completed'), " +
-                            "('m.maskov', 1, '2024-01-15 11:30:00', 'SEC002', 'completed'), " +
-                            "('a.smirnova', 1, '2024-01-17 14:00:00', 'SEC003', 'scheduled'), " +
-                            "('v.petrov', 1, '2024-01-17 15:30:00', 'SEC004', 'scheduled'), " +
-                            "('p.kotova', 2, '2024-01-16 10:00:00', 'SEC005', 'completed'), " +
-                            "('m.maskov', 2, '2024-01-16 12:00:00', 'SEC006', 'cancelled'), " +
-                            "('a.smirnova', 2, '2024-01-18 14:30:00', 'SEC007', 'scheduled'), " +
-                            "('v.petrov', 2, '2024-01-18 16:00:00', 'SEC008', 'scheduled'), " +
-                            "('p.kotova', 3, '2024-01-19 09:00:00', 'SEC009', 'scheduled'), " +
-                            "('m.maskov', 3, '2024-01-19 10:30:00', 'SEC010', 'scheduled'), " +
-                            "('a.smirnova', 3, '2024-01-19 12:00:00', 'SEC011', 'scheduled'), " +
-                            "('v.petrov', 3, '2024-01-19 13:30:00', 'SEC012', 'scheduled'), " +
-                            "('p.kotova', 4, '2024-01-22 09:30:00', 'SEC013', 'scheduled'), " +
-                            "('m.maskov', 5, '2024-01-23 11:00:00', 'SEC014', 'scheduled'), " +
-                            "('a.smirnova', 4, '2024-01-26 14:00:00', 'SEC015', 'scheduled')");
+                    stmt.execute("INSERT INTO appointments (patient_username, doctor_id, appointment_date, start_time, end_time, secret_id, status) VALUES " +
+                            "('p.kotova', 1, '2025-09-15', '10:00', '10:30', 'SEC001', 'completed'), " +
+                            "('m.maskov', 1, '2025-09-15', '12:00', '13:30', 'SEC002', 'completed'), " +
+                            "('a.smirnova', 1, '2025-09-17', '12:00', '13:30', 'SEC003', 'completed'), " +
+                            "('v.petrov', 1, '2025-09-17', '12:00', '13:30', 'SEC004', 'completed'), " +
+                            "('p.kotova', 2, '2025-09-16', '14:00', '14:30', 'SEC005', 'completed'), " +
+                            "('m.maskov', 2, '2025-09-16', '15:00', '15:30', 'SEC006', 'completed'), " +
+                            "('a.smirnova', 2, '2025-09-18', '12:00', '13:30', 'SEC007', 'completed'), " +
+                            "('v.petrov', 2, '2025-09-18', '15:00', '16:00', 'SEC008', 'completed'), " +
+                            "('p.kotova', 3, '2025-09-19', '10:00', '10:30', 'SEC009', 'completed'), " +
+                            "('m.maskov', 3, '2025-09-19', '11:00', '12:30', 'SEC010', 'completed'), " +
+                            "('a.smirnova', 3, '2025-09-19', '13:00', '14:00', 'SEC011', 'completed'), " +
+                            "('v.petrov', 3, '2025-09-19', '15:00', '16:00', 'SEC012', 'completed'), " +
+                            "('p.kotova', 4, '2025-09-22', '14:00', '15:00', 'SEC013', 'completed'), " +
+                            "('m.maskov', 5, '2025-09-17', '14:00', '15:00', 'SEC014', 'completed'), " +
+                            "('a.smirnova', 4, '2025-09-29', '10:00', '11:00', 'SEC015', 'completed'), " +
+                            "('v.petrov', 3, '2025-12-12', '15:00', '16:00', 'SEC012', 'scheduled'), " +
+                            "('p.kotova', 4, '2025-12-29', '14:00', '15:00', 'SEC013', 'scheduled'), " +
+                            "('m.maskov', 5, '2025-12-10', '14:00', '15:00', 'SEC014', 'scheduled') ");
                 }
 
                 System.out.println("База данных инициализирована успешно.");
