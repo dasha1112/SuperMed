@@ -56,11 +56,22 @@ public class DatabaseManager {
                         "end_time TEXT NOT NULL, " +
                         "FOREIGN KEY(doctor_id) REFERENCES doctors(id));";
 
+                // ТАБЛИЦА СООБЩЕНИЙ - ДОБАВЛЯЕМ
+                String sqlMessages = "CREATE TABLE IF NOT EXISTS messages (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        "sender_username TEXT NOT NULL, " +
+                        "receiver_username TEXT NOT NULL, " +
+                        "message_text TEXT NOT NULL, " +
+                        "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, " +
+                        "FOREIGN KEY(sender_username) REFERENCES users(username), " +
+                        "FOREIGN KEY(receiver_username) REFERENCES users(username));";
+
                 stmt.execute(sqlUsers);
                 stmt.execute(sqlBranches);
                 stmt.execute(sqlDoctors);
                 stmt.execute(sqlAppointments);
                 stmt.execute(sqlSchedules);
+                stmt.execute(sqlMessages); // ДОБАВЛЯЕМ ВЫПОЛНЕНИЕ СОЗДАНИЯ ТАБЛИЦЫ
 
                 // Тестовые данные
                 ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM users");
@@ -108,26 +119,31 @@ public class DatabaseManager {
                             "(4, 'Вторник', '08:00', '16:00'), " +
                             "(5, 'Среда', '09:00', '17:00')");
 
-                    // Тестовые записи к врачам
+                    // ОБНОВЛЕННЫЕ ТЕСТОВЫЕ ЗАПИСИ К ВРАЧАМ - ДОБАВЛЯЕМ СВЕЖИЕ ДАТЫ
                     stmt.execute("INSERT INTO appointments (patient_username, doctor_id, appointment_date, start_time, end_time, secret_id, status) VALUES " +
-                            "('p.kotova', 1, '2025-09-15', '10:00', '10:30', 'SEC001', 'completed'), " +
-                            "('m.maskov', 1, '2025-09-15', '12:00', '13:30', 'SEC002', 'completed'), " +
-                            "('a.smirnova', 1, '2025-09-17', '12:00', '13:30', 'SEC003', 'completed'), " +
-                            "('v.petrov', 1, '2025-09-17', '12:00', '13:30', 'SEC004', 'completed'), " +
-                            "('p.kotova', 2, '2025-09-16', '14:00', '14:30', 'SEC005', 'completed'), " +
-                            "('m.maskov', 2, '2025-09-16', '15:00', '15:30', 'SEC006', 'completed'), " +
-                            "('a.smirnova', 2, '2025-09-18', '12:00', '13:30', 'SEC007', 'completed'), " +
-                            "('v.petrov', 2, '2025-09-18', '15:00', '16:00', 'SEC008', 'completed'), " +
-                            "('p.kotova', 3, '2025-09-19', '10:00', '10:30', 'SEC009', 'completed'), " +
-                            "('m.maskov', 3, '2025-09-19', '11:00', '12:30', 'SEC010', 'completed'), " +
-                            "('a.smirnova', 3, '2025-09-19', '13:00', '14:00', 'SEC011', 'completed'), " +
-                            "('v.petrov', 3, '2025-09-19', '15:00', '16:00', 'SEC012', 'completed'), " +
-                            "('p.kotova', 4, '2025-09-22', '14:00', '15:00', 'SEC013', 'completed'), " +
-                            "('m.maskov', 5, '2025-09-17', '14:00', '15:00', 'SEC014', 'completed'), " +
-                            "('a.smirnova', 4, '2025-09-29', '10:00', '11:00', 'SEC015', 'completed'), " +
-                            "('v.petrov', 3, '2025-12-12', '15:00', '16:00', 'SEC012', 'scheduled'), " +
-                            "('p.kotova', 4, '2025-12-29', '14:00', '15:00', 'SEC013', 'scheduled'), " +
-                            "('m.maskov', 5, '2025-12-10', '14:00', '15:00', 'SEC014', 'scheduled') ");
+                            "('p.kotova', 1, '2025-01-20', '10:00', '10:30', 'SEC001', 'scheduled'), " +
+                            "('m.maskov', 1, '2025-01-20', '11:00', '11:30', 'SEC002', 'scheduled'), " +
+                            "('a.smirnova', 1, '2025-01-20', '12:00', '12:30', 'SEC003', 'scheduled'), " +
+                            "('v.petrov', 1, '2025-01-21', '09:00', '09:30', 'SEC004', 'scheduled'), " +
+                            "('p.kotova', 2, '2025-01-21', '14:00', '14:30', 'SEC005', 'scheduled'), " +
+                            "('m.maskov', 2, '2025-01-22', '15:00', '15:30', 'SEC006', 'scheduled'), " +
+                            "('a.smirnova', 2, '2025-01-22', '16:00', '16:30', 'SEC007', 'scheduled'), " +
+                            "('v.petrov', 3, '2025-01-23', '10:00', '10:30', 'SEC008', 'scheduled'), " +
+                            "('p.kotova', 3, '2025-01-23', '11:00', '11:30', 'SEC009', 'scheduled'), " +
+                            "('m.maskov', 4, '2025-01-24', '14:00', '14:30', 'SEC010', 'scheduled'), " +
+                            "('a.smirnova', 4, '2025-01-24', '15:00', '15:30', 'SEC011', 'scheduled'), " +
+                            "('v.petrov', 5, '2025-01-25', '09:00', '09:30', 'SEC012', 'scheduled')");
+
+                    // ТЕСТОВЫЕ СООБЩЕНИЯ - ДОБАВЛЯЕМ
+                    stmt.execute("INSERT INTO messages (sender_username, receiver_username, message_text, timestamp) VALUES " +
+                            "('p.kotova', 'd.ivanov', 'Здравствуйте, доктор! У меня вопрос по рецепту, который вы выписали в прошлый раз.', '2025-01-15 10:15:00'), " +
+                            "('d.ivanov', 'p.kotova', 'Здравствуйте, Алексей. Какой именно у вас вопрос?', '2025-01-15 10:20:00'), " +
+                            "('p.kotova', 'd.ivanov', 'Можно ли заменить препарат на аналог? В аптеке не было того, что вы прописали.', '2025-01-15 10:22:00'), " +
+                            "('m.maskov', 'd.ivanov', 'Спасибо за консультацию!', '2025-01-14 16:30:00'), " +
+                            "('a.smirnova', 'd.ivanov', 'Когда можно записаться на прием?', '2025-01-16 09:45:00'), " +
+                            "('d.ivanov', 'a.smirnova', 'На следующей неделе есть свободные слоты во вторник и четверг.', '2025-01-16 10:00:00'), " +
+                            "('v.petrov', 'd.ivanov', 'Добрый день! Нужна консультация по результатам анализов.', '2025-01-17 14:20:00'), " +
+                            "('d.ivanov', 'v.petrov', 'Здравствуйте! Присылайте результаты, посмотрю.', '2025-01-17 14:30:00')");
                 }
 
                 System.out.println("База данных инициализирована успешно.");
