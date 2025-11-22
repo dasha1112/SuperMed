@@ -434,4 +434,184 @@ public class Model {
             return false;
         }
     }
+
+    // НОВЫЕ МЕТОДЫ ДЛЯ ФУНКЦИОНАЛА ВРАЧА - ДОБАВЛЯЕМ
+
+    // Получение расписания врача - ОБНОВЛЕННЫЙ МЕТОД
+    public List<Appointment> getDoctorSchedule(String username) {
+        List<Appointment> appointments = new ArrayList<>();
+
+        // Сначала получим ID врача по username
+        String doctorIdQuery = "SELECT id FROM doctors WHERE name = (SELECT name FROM users WHERE username = ?)";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(doctorIdQuery)) {
+
+            pstmt.setString(1, username);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                int doctorId = rs.getInt("id");
+
+                // Теперь получим расписание для этого врача
+                String sql = "SELECT a.*, d.name as doctor_name " +
+                        "FROM appointments a " +
+                        "JOIN doctors d ON a.doctor_id = d.id " +
+                        "WHERE a.doctor_id = ? " +
+                        "AND a.appointment_date >= date('now') " +
+                        "ORDER BY a.appointment_date, a.start_time";
+
+                try (PreparedStatement scheduleStmt = conn.prepareStatement(sql)) {
+                    scheduleStmt.setInt(1, doctorId);
+                    ResultSet scheduleRs = scheduleStmt.executeQuery();
+
+                    while (scheduleRs.next()) {
+                        Appointment appointment = new Appointment(
+                                scheduleRs.getInt("id"),
+                                scheduleRs.getString("patient_username"), // Используем логин пациента
+                                scheduleRs.getInt("doctor_id"),
+                                scheduleRs.getString("appointment_date"),
+                                scheduleRs.getString("start_time"),
+                                scheduleRs.getString("end_time"),
+                                scheduleRs.getString("secret_id"),
+                                scheduleRs.getString("status"),
+                                scheduleRs.getString("doctor_name")
+                        );
+                        appointments.add(appointment);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Ошибка при получении расписания врача: " + e.getMessage());
+        }
+        return appointments;
+    }
+
+    // Завершение приема
+    public boolean completeAppointment(int appointmentId) {
+        String sql = "UPDATE appointments SET status = 'completed' WHERE id = ?";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, appointmentId);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Ошибка при завершении приема: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // Получение сообщений врача
+    public List<Message> getDoctorMessages(String username) {
+        List<Message> messages = new ArrayList<>();
+        String sql = "SELECT * FROM messages WHERE receiver_username = ? OR sender_username = ? " +
+                "ORDER BY timestamp";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, username);
+            pstmt.setString(2, username);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Message message = new Message(
+                        rs.getInt("id"),
+                        rs.getString("sender_username"),
+                        rs.getString("receiver_username"),
+                        rs.getString("message_text"),
+                        rs.getString("timestamp")
+                );
+                messages.add(message);
+            }
+        } catch (SQLException e) {
+            System.err.println("Ошибка при получении сообщений врача: " + e.getMessage());
+        }
+        return messages;
+    }
+
+    // Отправка сообщения
+    public boolean sendMessage(Message message) {
+        String sql = "INSERT INTO messages (sender_username, receiver_username, message_text) VALUES (?, ?, ?)";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, message.getSenderUsername());
+            pstmt.setString(2, message.getReceiverUsername());
+            pstmt.setString(3, message.getMessageText());
+
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Ошибка при отправке сообщения: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // Получение диалогов врача
+    public List<Conversation> getDoctorConversations(String username) {
+        List<Conversation> conversations = new ArrayList<>();
+        String sql = "SELECT DISTINCT " +
+                "CASE WHEN sender_username = ? THEN receiver_username ELSE sender_username END as participant, " +
+                "MAX(timestamp) as last_message_time " +
+                "FROM messages " +
+                "WHERE sender_username = ? OR receiver_username = ? " +
+                "GROUP BY participant " +
+                "ORDER BY last_message_time DESC";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, username);
+            pstmt.setString(2, username);
+            pstmt.setString(3, username);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Conversation conversation = new Conversation(
+                        rs.getString("participant"),
+                        rs.getString("last_message_time")
+                );
+                conversations.add(conversation);
+            }
+        } catch (SQLException e) {
+            System.err.println("Ошибка при получении диалогов врача: " + e.getMessage());
+        }
+        return conversations;
+    }
+
+    // НОВЫЙ МЕТОД: Получение сообщений конкретного диалога
+    public List<Message> getConversationMessages(String doctorUsername, String patientUsername) {
+        List<Message> messages = new ArrayList<>();
+        String sql = "SELECT * FROM messages " +
+                "WHERE (sender_username = ? AND receiver_username = ?) " +
+                "OR (sender_username = ? AND receiver_username = ?) " +
+                "ORDER BY timestamp";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, doctorUsername);
+            pstmt.setString(2, patientUsername);
+            pstmt.setString(3, patientUsername);
+            pstmt.setString(4, doctorUsername);
+
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Message message = new Message(
+                        rs.getInt("id"),
+                        rs.getString("sender_username"),
+                        rs.getString("receiver_username"),
+                        rs.getString("message_text"),
+                        rs.getString("timestamp")
+                );
+                messages.add(message);
+            }
+        } catch (SQLException e) {
+            System.err.println("Ошибка при получении сообщений диалога: " + e.getMessage());
+        }
+        return messages;
+    }
 }
