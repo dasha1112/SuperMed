@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:gravity="center">
+
+    <TextView
+        android:id="@+id/tv_welcome"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Здравствуйте, Пациент!"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="#111"
+        android:layout_marginBottom="32dp"
+        android:textAlignment="center" />
+
+    <Button
+        android:id="@+id/btn_branches"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Выбрать филиал и врача"
+        android:layout_marginBottom="16dp"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:gravity="left"
+        android:textColor="#444"
+        style="@style/Widget.MaterialComponents.Button" />
+
+    <Button
+        android:id="@+id/btn_my_appointments"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Мои записи"
+        android:layout_marginBottom="16dp"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:gravity="left"
+        android:textColor="#444"
+        style="@style/Widget.MaterialComponents.Button" />
+
+    <Button
+        android:id="@+id/btn_logout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Выйти из аккаунта"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:gravity="left"
+        android:textColor="#444"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+</LinearLayout>

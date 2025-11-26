@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SuperMed Пациент</string>
+
+    <!-- Авторизация -->
+    <string name="login">Войти</string>
+    <string name="register">Регистрация</string>
+    <string name="username">Имя пользователя</string>
+    <string name="password">Пароль</string>
+    <string name="confirm_password">Подтвердите пароль</string>
+
+    <!-- Главный экран -->
+    <string name="welcome">Здравствуйте, %1$s!</string>
+    <string name="choose_branch_doctor">Выбрать филиал и врача</string>
+    <string name="my_appointments">Мои записи</string>
+    <string name="logout">Выйти из аккаунта</string>
+
+    <!-- Списки -->
+    <string name="branches">Филиалы</string>
+    <string name="doctors">Врачи</string>
+    <string name="available_slots">Свободные слоты</string>
+
+    <!-- Запись -->
+    <string name="book_appointment">Записаться</string>
+    <string name="no_appointments">У вас пока нет записей</string>
+
+    <!-- Общие сообщения -->
+    <string name="error_connection">Нет подключения к серверу</string>
+    <string name="error_loading">Не удалось загрузить данные</string>
+    <string name="success_appointment">Запись создана!</string>
+</resources>
