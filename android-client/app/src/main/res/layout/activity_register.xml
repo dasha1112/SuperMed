@@ -24,6 +24,7 @@
             android:id="@+id/et_reg_username"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textSize="22sp"
             android:inputType="text" />
 
     </com.google.android.material.textfield.TextInputLayout>
@@ -31,13 +32,13 @@
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
         android:hint="Пароль">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/et_reg_password"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textSize="22sp"
             android:inputType="textPassword" />
 
     </com.google.android.material.textfield.TextInputLayout>
@@ -45,13 +46,13 @@
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
         android:hint="Подтвердите пароль">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/et_reg_password_confirm"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textSize="22sp"
             android:inputType="textPassword" />
 
     </com.google.android.material.textfield.TextInputLayout>
@@ -59,25 +60,20 @@
     <Button
         android:id="@+id/btn_register_submit"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="70sp"
         android:text="Зарегистрироваться"
         android:layout_marginTop="24dp"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:gravity="left"
-        android:textColor="#444"
-        style="@style/Widget.MaterialComponents.Button" />
+        android:textSize="22sp"
+        android:textColor="#fff"
+        android:backgroundTint="#3498DB" />
 
     <Button
         android:id="@+id/btn_back"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="70sp"
         android:text="Назад"
-        android:layout_marginTop="8dp"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:gravity="left"
-        android:textColor="#444"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+        android:textSize="22sp"
+        android:textColor="#fff"
+        android:backgroundTint="#3498DB" />
 
 </LinearLayout>
