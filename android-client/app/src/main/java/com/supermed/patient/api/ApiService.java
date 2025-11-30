@@ -32,7 +32,7 @@ public interface ApiService {
     @POST("/appointments")
     Call<Void> createAppointment(@Body Appointment appointment);
 
-    // === Статистика (не используется у пациента, но есть в API) ===
+    // === Статистика  ===
     @GET("/statistics")
     Call<List<Statistic>> getStatistics(
             @Query("doctorId") Integer doctorId,
@@ -41,7 +41,7 @@ public interface ApiService {
             @Query("endDate") String endDate
     );
 
-    // === Управление расписанием (только для менеджера, не используется у пациента) ===
+    // === Управление расписанием ===
     @PUT("/schedules/{id}")
     Call<Void> updateSchedule(@Path("id") int id, @Body Schedule schedule);
 
@@ -51,7 +51,21 @@ public interface ApiService {
     @DELETE("/schedules/{id}")
     Call<Void> deleteSchedule(@Path("id") int id);
 
-    // === Дополнительно (если понадобится позже) ===
+    // === Сообщения ===
+    // Для врача: загрузка списка диалогов
+    @GET("/api/doctor/{username}/conversations")
+    Call<List<Conversation>> getConversations(@Path("username") String username);
+
+    @GET("/api/messages/conversation")
+    Call<List<Message>> getMessages(
+            @Query("doctor") String doctorUsername,
+            @Query("patient") String patientUsername
+    );
+
+    @POST("/api/messages/send")
+    Call<Message> sendMessage(@Body Message message);
+
+    // === Дополнительно ===
     // GET /branches/{id} — получение филиала по ID
     @GET("/branches/{id}")
     Call<Branch> getBranchById(@Path("id") int id);

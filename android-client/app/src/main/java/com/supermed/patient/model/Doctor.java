@@ -5,12 +5,11 @@ public class Doctor {
     private String name;
     private String specialization;
     private int branchId;
-    private String branchName;      // ← добавлено на сервере при JOIN
-    private String branchAddress;   // ← добавлено на сервере при JOIN
+    private String branchName;
+    private String branchAddress;
 
     public Doctor() {}
 
-    // Основной конструктор (как в серверной модели)
     public Doctor(int id, String name, String specialization, int branchId, String branchName, String branchAddress) {
         this.id = id;
         this.name = name;
