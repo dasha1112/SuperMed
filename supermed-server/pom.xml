@@ -32,6 +32,48 @@
             <artifactId>sqlite-jdbc</artifactId>
             <version>3.42.0.0</version>
         </dependency>
+        <!-- JUnit Jupiter API (для JUnit 5 @Test, @DisplayName и т.д.) -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.10.0</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- JUnit Jupiter Engine (для запуска тестов @Test) -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.10.0</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- JUnit Platform Suite Engine (ДЛЯ @Suite, @SelectClasses и т.д.) -->
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-suite-engine</artifactId>
+            <version>1.10.0</version> <!-- Версия должна совпадать с JUnit 5 -->
+            <scope>test</scope>
+        </dependency>
+        <!-- JUnit Platform Launcher (для запуска тестов через IDE или Maven/Gradle) -->
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-launcher</artifactId>
+            <version>1.10.0</version> <!-- Версия должна совпадать с JUnit 5 -->
+            <scope>test</scope>
+        </dependency>
+        <!-- Mockito Core (для Mock-объектов) -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.10.0</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- Mockito JUnit Jupiter (интеграция Mockito с JUnit 5) -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>5.10.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

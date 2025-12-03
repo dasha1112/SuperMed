@@ -2,7 +2,7 @@
 
 Ссылка: https://drive.google.com/drive/folders/1J7zxVv32QNCsdRdEYgtj_erHAJFFJEaY?usp=sharing
 
-## Как запустить проект
+## Как запустить проект (сервер и клиента менеджера)
 
 1. Клонируйте репозиторий
 
@@ -40,10 +40,34 @@ Error: JavaFX runtime components are missing, and are required to run this appli
 Если все заработало корректно, то у вас должно появиться окно входа, которое выглядит следующим образом:
 ![Loggin](./Instructions/Loggin.PNG)
 
-4. Описание запуска веб-клиента врача
+## Описание запуска веб-клиента врача
 Перейдите в папку web-client/doctor и найдите файл login.html, щелкните на него 2 раза и вы перейдете на следующее окно в браузере:
+
 ![web-client](./Instructions/web-client.PNG)
 
 Для входа используйте тестовые данные, указанные в нижней части панели входа.
+
+## Описание запуска android клиента пациента
+
+## Описание запуска тестов для сервера
+Тесты для сервера имеют следующую структуру:
+
+![structure_tests_server](./Instructions/structure_tests_server.PNG)
+
+Для их запуска необходимо выбрать в качестве запускаемого файла AllServerTests и отредактировать его конфигураци. Для этого перейдите в раздел Run → Edit Configurations и добавьте новую конфигурацию типа JUnit и в качестве запускаемого класса выберете com.supermed.AllServerTests. Далее в поле VM options добавьте:
+
+```
+--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.util.concurrent=ALL-UNNAMED --add-opens java.base/java.io=ALL-UNNAMED --add-opens java.sql/java.sql=ALL-UNNAMED -Dnet.bytebuddy.experimental=true
+```
+
+Ваша конфигурация должна выглядеть следующим образом:
+
+![configuration_for_server_tests](./Instructions/configuration_for_server_tests.PNG)
+
+Если все запущено корректно, то все тесты пройдут успешно:
+
+![successfully_server_tests](./Instructions/successfully_server_tests.PNG)
+
+При изменении кода на сервере, убедитесь, что все тесты все еще проходят успешно! Возможно вам понадобится их моифицировать.
 
 Описание, всех классов и проекта в целом, а также рекомендации по работе с ним находятся в файле Instructions/Code.docx , советую с ним ознакомиться.
