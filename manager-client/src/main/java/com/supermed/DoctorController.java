@@ -5,6 +5,7 @@ import com.google.gson.reflect.TypeToken;
 import com.supermed.entities.Appointment;
 import com.supermed.entities.Conversation;
 import com.supermed.entities.Message;
+import com.supermed.entities.Schedule;
 import com.supermed.entities.User;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -17,6 +18,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 
@@ -27,6 +29,8 @@ import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -36,18 +40,34 @@ public class DoctorController implements Initializable {
     private static final String BASE_URL = "http://localhost:4567";
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final Gson gson = new Gson();
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     @FXML private Label userInfoLabel;
     @FXML private Label statusLabel;
-    @FXML private TableView<Appointment> doctorScheduleTable;
-    @FXML private TableColumn<Appointment, String> colPatName;
-    @FXML private TableColumn<Appointment, String> colAppDate;
-    @FXML private TableColumn<Appointment, String> colAppTimeStart;
-    @FXML private TableColumn<Appointment, String> colAppTimeEnd;
-    @FXML private TableColumn<Appointment, String> colAppSecretId;
-    @FXML private TableColumn<Appointment, String> colAppStatus;
-    @FXML private TableColumn<Appointment, Void> colAppActions; // Для кнопки "Завершить прием"
-    @FXML private Label scheduleCountLabel;
+
+    // Вкладка "Мое расписание"
+    @FXML private Tab scheduleTab;
+    @FXML private DatePicker datePicker;
+    @FXML private ComboBox<String> viewTypeComboBox;
+    @FXML private TableView<Appointment> scheduleTableView;
+    @FXML private TableColumn<Appointment, String> scheduleDateCol;
+    @FXML private TableColumn<Appointment, String> scheduleTimeCol;
+    @FXML private TableColumn<Appointment, String> schedulePatientCol;
+    @FXML private TableColumn<Appointment, String> scheduleTypeCol;
+    @FXML private TableColumn<Appointment, String> scheduleStatusCol;
+    @FXML private TableColumn<Appointment, Void> scheduleActionsCol;
+    @FXML private Label scheduleStatsLabel;
+    @FXML private Button todayButton;
+    @FXML private Button weekButton;
+    @FXML private Button refreshScheduleButton;
+
+    // Вкладка "Рабочее расписание" (НОВАЯ - вместо "Общее расписание")
+    @FXML private TableView<Schedule> workScheduleTable;
+    @FXML private TableColumn<Schedule, String> colDayOfWeek;
+    @FXML private TableColumn<Schedule, String> colWorkHours;
+    @FXML private TableColumn<Schedule, String> colBranch;
+    @FXML private Label workScheduleLabel;
+    @FXML private Button refreshWorkScheduleButton;
 
     // Элементы для чата
     @FXML private ListView<Conversation> conversationListView;
@@ -57,16 +77,17 @@ public class DoctorController implements Initializable {
 
     private User currentUser;
     private ObservableList<Appointment> doctorAppointmentsData = FXCollections.observableArrayList();
+    private ObservableList<Schedule> doctorWorkScheduleData = FXCollections.observableArrayList();
     private ObservableList<Conversation> conversationsData = FXCollections.observableArrayList();
-    private Conversation selectedConversation; // Текущий выбранный диалог
+    private Conversation selectedConversation;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        setupScheduleTable();
+        setupScheduleTab();
+        setupWorkScheduleTable();
         setupConversationList();
         updateStatus("Готов к работе", "info");
 
-        // Привязываем слушателя к выбору диалога
         conversationListView.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
                 selectedConversation = newVal;
@@ -79,17 +100,15 @@ public class DoctorController implements Initializable {
             }
         });
 
-        // Деактивируем поле ввода сообщения и кнопку, пока не выбран диалог
         messageInput.disableProperty().bind(conversationListView.getSelectionModel().selectedItemProperty().isNull());
-        messageInput.disableProperty().bind(conversationListView.getSelectionModel().selectedItemProperty().isNull()); // Кнопка отправки
     }
 
     public void setCurrentUser(User user) {
         this.currentUser = user;
         if (userInfoLabel != null && user != null) {
             userInfoLabel.setText("Пользователь: " + user.getUsername() + " (" + getUserTypeDisplayName(user.getUserType()) + ")");
-            // После установки пользователя загружаем его данные
             refreshSchedule();
+            loadWorkSchedule();
             loadConversations();
         }
     }
@@ -103,29 +122,42 @@ public class DoctorController implements Initializable {
         }
     }
 
-    // --- Методы для вкладки "Расписание" ---
-    private void setupScheduleTable() {
-        colPatName.setCellValueFactory(new PropertyValueFactory<>("patientUsername"));
-        colAppDate.setCellValueFactory(new PropertyValueFactory<>("appointmentDate"));
-        colAppTimeStart.setCellValueFactory(new PropertyValueFactory<>("startTime"));
-        colAppTimeEnd.setCellValueFactory(new PropertyValueFactory<>("endTime"));
-        colAppSecretId.setCellValueFactory(new PropertyValueFactory<>("secretId"));
-        colAppStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
+    // --- Методы для вкладки "Мое расписание" ---
+    private void setupScheduleTab() {
+        datePicker.setValue(LocalDate.now());
+        viewTypeComboBox.getItems().addAll("День", "Неделя", "Месяц", "Все");
+        viewTypeComboBox.setValue("День");
 
-        colAppActions.setCellFactory(new Callback<>() {
+        scheduleDateCol.setCellValueFactory(new PropertyValueFactory<>("appointmentDate"));
+        scheduleTimeCol.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleStringProperty(
+                        cellData.getValue().getStartTime() + " - " + cellData.getValue().getEndTime()
+                ));
+        schedulePatientCol.setCellValueFactory(new PropertyValueFactory<>("patientUsername"));
+        scheduleTypeCol.setCellValueFactory(cellData -> {
+            Appointment app = cellData.getValue();
+            String type = "Консультация";
+            if (app.getSecretId() != null && app.getSecretId().startsWith("SURG")) {
+                type = "Операция";
+            } else if (app.getSecretId() != null && app.getSecretId().startsWith("CHK")) {
+                type = "Осмотр";
+            }
+            return new javafx.beans.property.SimpleStringProperty(type);
+        });
+        scheduleStatusCol.setCellValueFactory(new PropertyValueFactory<>("status"));
+
+        scheduleActionsCol.setCellFactory(new Callback<>() {
             @Override
             public TableCell<Appointment, Void> call(final TableColumn<Appointment, Void> param) {
-                final TableCell<Appointment, Void> cell = new TableCell<>() {
+                return new TableCell<>() {
                     private final Button completeButton = new Button("Завершить");
+                    private final Label statusLabel = new Label();
+
                     {
-                        completeButton.setStyle("-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 10px; -fx-padding: 3 6;");
+                        completeButton.setStyle("-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-font-weight: bold;");
                         completeButton.setOnAction(event -> {
                             Appointment appointment = getTableView().getItems().get(getIndex());
-                            if ("scheduled".equals(appointment.getStatus())) {
-                                completeAppointment(appointment);
-                            } else {
-                                showAlert("Информация", "Прием уже завершен или отменен.", "INFO");
-                            }
+                            completeAppointment(appointment);
                         });
                     }
 
@@ -137,19 +169,232 @@ public class DoctorController implements Initializable {
                         } else {
                             Appointment appointment = getTableView().getItems().get(getIndex());
                             if ("scheduled".equals(appointment.getStatus())) {
+                                completeButton.setText("Завершить");
+                                completeButton.setDisable(false);
                                 setGraphic(completeButton);
+                            } else if ("completed".equals(appointment.getStatus())) {
+                                statusLabel.setText("✓ Завершено");
+                                statusLabel.setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold;");
+                                setGraphic(statusLabel);
+                            } else if ("cancelled".equals(appointment.getStatus())) {
+                                statusLabel.setText("✗ Отменено");
+                                statusLabel.setStyle("-fx-text-fill: #e74c3c; -fx-font-weight: bold;");
+                                setGraphic(statusLabel);
                             } else {
-                                setGraphic(new Label(appointment.getStatus())); // Можно отображать статус
+                                statusLabel.setText(appointment.getStatus());
+                                setGraphic(statusLabel);
                             }
                         }
                     }
                 };
-                return cell;
             }
         });
-        doctorScheduleTable.setItems(doctorAppointmentsData);
+
+        datePicker.valueProperty().addListener((obs, oldDate, newDate) -> filterSchedule());
+        viewTypeComboBox.valueProperty().addListener((obs, oldVal, newVal) -> filterSchedule());
+
+        todayButton.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold;");
+        weekButton.setStyle("-fx-background-color: #9b59b6; -fx-text-fill: white; -fx-font-weight: bold;");
+        refreshScheduleButton.setStyle("-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-font-weight: bold;");
     }
 
+    // --- Методы для вкладки "Рабочее расписание" (НОВЫЕ) ---
+    private void setupWorkScheduleTable() {
+        colDayOfWeek.setCellValueFactory(new PropertyValueFactory<>("dayOfWeek"));
+        colWorkHours.setCellValueFactory(cellData ->
+                new javafx.beans.property.SimpleStringProperty(
+                        cellData.getValue().getWorkHours()
+                ));
+        colBranch.setCellValueFactory(new PropertyValueFactory<>("branchName"));
+
+        // Добавим цветовое кодирование для дней недели
+        colDayOfWeek.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String day, boolean empty) {
+                super.updateItem(day, empty);
+                if (empty || day == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    setText(day);
+                    // Разные цвета для разных дней
+                    switch (day.toLowerCase()) {
+                        case "понедельник":
+                            setStyle("-fx-background-color: #e8f4f8; -fx-font-weight: bold;");
+                            break;
+                        case "вторник":
+                            setStyle("-fx-background-color: #f0f8e8; -fx-font-weight: bold;");
+                            break;
+                        case "среда":
+                            setStyle("-fx-background-color: #f8f0e8; -fx-font-weight: bold;");
+                            break;
+                        case "четверг":
+                            setStyle("-fx-background-color: #f8e8f0; -fx-font-weight: bold;");
+                            break;
+                        case "пятница":
+                            setStyle("-fx-background-color: #e8f0f8; -fx-font-weight: bold;");
+                            break;
+                        case "суббота":
+                            setStyle("-fx-background-color: #f8f8e8; -fx-font-weight: bold; -fx-text-fill: #d35400;");
+                            break;
+                        case "воскресенье":
+                            setStyle("-fx-background-color: #f8e8e8; -fx-font-weight: bold; -fx-text-fill: #c0392b;");
+                            break;
+                        default:
+                            setStyle("-fx-font-weight: bold;");
+                    }
+                }
+            }
+        });
+
+        workScheduleTable.setItems(doctorWorkScheduleData);
+        refreshWorkScheduleButton.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold;");
+    }
+
+    @FXML
+    private void loadWorkSchedule() {    // <- ЗДЕСЬ МЕТОД
+        if (currentUser == null || !currentUser.getUserType().equals("DOCTOR")) {
+            return;
+        }
+
+        updateStatus("Загрузка рабочего расписания...", "info");
+        try {
+            // Используем endpoint для рабочего расписания
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(BASE_URL + "/api/doctor/" + currentUser.getUsername() + "/work-schedule"))
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200) {
+                Type scheduleListType = new TypeToken<List<Schedule>>(){}.getType();
+                List<Schedule> schedules = gson.fromJson(response.body(), scheduleListType);
+
+                doctorWorkScheduleData.clear();
+                doctorWorkScheduleData.addAll(schedules);
+
+                workScheduleLabel.setText("Рабочие дни: " + schedules.size() + " дней в неделю");
+                updateStatus("Рабочее расписание загружено", "success");
+
+            } else if (response.statusCode() == 404) {
+                updateStatus("Рабочее расписание не найдено", "warning");
+                showAlert("Информация", "Ваше рабочее расписание еще не настроено менеджером.", "INFO");
+            } else {
+                updateStatus("Ошибка загрузки расписания", "error");
+            }
+        } catch (IOException | InterruptedException e) {
+            updateStatus("Ошибка подключения к серверу", "error");
+            System.err.println("Ошибка при загрузке рабочего расписания: " + e.getMessage());
+        }
+    }
+
+    private int getDayIndex(String day, String[] daysOrder) {
+        for (int i = 0; i < daysOrder.length; i++) {
+            if (daysOrder[i].equalsIgnoreCase(day)) {
+                return i;
+            }
+        }
+        return daysOrder.length; // Если день не найден, ставим в конец
+    }
+
+    @FXML
+    private void refreshWorkSchedule() {
+        loadWorkSchedule();
+    }
+
+    // --- Методы для фильтрации записей ---
+    @FXML
+    private void handleShowToday() {
+        datePicker.setValue(LocalDate.now());
+        viewTypeComboBox.setValue("День");
+    }
+
+    @FXML
+    private void handleShowWeek() {
+        datePicker.setValue(LocalDate.now());
+        viewTypeComboBox.setValue("Неделя");
+    }
+
+    @FXML
+    private void handleRefreshScheduleTab() {
+        refreshSchedule();
+        filterSchedule();
+    }
+
+    private void filterSchedule() {
+        if (viewTypeComboBox.getValue() == null || datePicker.getValue() == null) {
+            return;
+        }
+
+        LocalDate selectedDate = datePicker.getValue();
+        String viewType = viewTypeComboBox.getValue();
+
+        ObservableList<Appointment> filteredData = FXCollections.observableArrayList();
+
+        for (Appointment appointment : doctorAppointmentsData) {
+            try {
+                LocalDate appointmentDate = LocalDate.parse(appointment.getAppointmentDate());
+
+                switch (viewType) {
+                    case "День":
+                        if (appointmentDate.equals(selectedDate)) {
+                            filteredData.add(appointment);
+                        }
+                        break;
+                    case "Неделя":
+                        LocalDate weekStart = selectedDate.minusDays(selectedDate.getDayOfWeek().getValue() - 1);
+                        LocalDate weekEnd = weekStart.plusDays(6);
+                        if (!appointmentDate.isBefore(weekStart) && !appointmentDate.isAfter(weekEnd)) {
+                            filteredData.add(appointment);
+                        }
+                        break;
+                    case "Месяц":
+                        LocalDate monthStart = selectedDate.withDayOfMonth(1);
+                        LocalDate monthEnd = monthStart.plusMonths(1).minusDays(1);
+                        if (!appointmentDate.isBefore(monthStart) && !appointmentDate.isAfter(monthEnd)) {
+                            filteredData.add(appointment);
+                        }
+                        break;
+                    case "Все":
+                        if (!appointmentDate.isBefore(LocalDate.now())) {
+                            filteredData.add(appointment);
+                        }
+                        break;
+                }
+            } catch (Exception e) {
+                // Пропускаем
+            }
+        }
+
+        filteredData.sort((a1, a2) -> {
+            int dateCompare = a1.getAppointmentDate().compareTo(a2.getAppointmentDate());
+            if (dateCompare != 0) return dateCompare;
+            return a1.getStartTime().compareTo(a2.getStartTime());
+        });
+
+        scheduleTableView.setItems(filteredData);
+        updateScheduleStats(filteredData);
+    }
+
+    private void updateScheduleStats(ObservableList<Appointment> appointments) {
+        long scheduled = appointments.stream()
+                .filter(a -> "scheduled".equals(a.getStatus()))
+                .count();
+        long completed = appointments.stream()
+                .filter(a -> "completed".equals(a.getStatus()))
+                .count();
+        long cancelled = appointments.stream()
+                .filter(a -> "cancelled".equals(a.getStatus()))
+                .count();
+
+        scheduleStatsLabel.setText(String.format(
+                "Всего: %d | Запланировано: %d | Завершено: %d | Отменено: %d",
+                appointments.size(), scheduled, completed, cancelled
+        ));
+    }
+
+    // --- Методы для загрузки записей ---
     @FXML
     private void refreshSchedule() {
         if (currentUser == null || !currentUser.getUserType().equals("DOCTOR")) {
@@ -157,7 +402,7 @@ public class DoctorController implements Initializable {
             return;
         }
 
-        updateStatus("Загрузка расписания...", "info");
+        updateStatus("Загрузка записей...", "info");
         try {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(BASE_URL + "/api/doctor/" + currentUser.getUsername() + "/schedule"))
@@ -169,18 +414,21 @@ public class DoctorController implements Initializable {
             if (response.statusCode() == 200) {
                 Type appointmentListType = new TypeToken<List<Appointment>>(){}.getType();
                 List<Appointment> appointments = gson.fromJson(response.body(), appointmentListType);
+
                 doctorAppointmentsData.clear();
                 doctorAppointmentsData.addAll(appointments);
-                scheduleCountLabel.setText("Всего записей: " + appointments.size());
-                updateStatus("Расписание загружено успешно", "success");
+
+                updateStatus("Записи загружены успешно", "success");
+                filterSchedule();
+
             } else {
-                updateStatus("Ошибка загрузки расписания: " + response.statusCode(), "error");
-                showAlert("Ошибка", "Не удалось загрузить расписание.", "ERROR");
+                updateStatus("Ошибка загрузки записей: " + response.statusCode(), "error");
+                showAlert("Ошибка", "Не удалось загрузить записи.", "ERROR");
             }
         } catch (IOException | InterruptedException e) {
             updateStatus("Ошибка подключения к серверу", "error");
             showAlert("Ошибка", "Не удалось подключиться к серверу.", "ERROR");
-            System.err.println("Ошибка при загрузке расписания доктора: " + e.getMessage());
+            System.err.println("Ошибка при загрузке записей: " + e.getMessage());
         }
     }
 
@@ -208,7 +456,7 @@ public class DoctorController implements Initializable {
 
                 if (response.statusCode() == 200) {
                     updateStatus("Прием завершен успешно", "success");
-                    refreshSchedule(); // Обновить расписание после завершения
+                    refreshSchedule();
                     showAlert("Успех", "Прием успешно завершен.", "INFO");
                 } else {
                     updateStatus("Ошибка завершения приема: " + response.statusCode(), "error");
@@ -222,7 +470,7 @@ public class DoctorController implements Initializable {
         }
     }
 
-    // --- Методы для вкладки "Сообщения" ---
+    // --- Методы для чата ---
     private void setupConversationList() {
         conversationListView.setItems(conversationsData);
         conversationListView.setCellFactory(lv -> new ListCell<>() {
@@ -238,6 +486,7 @@ public class DoctorController implements Initializable {
         });
     }
 
+    @FXML
     private void loadConversations() {
         if (currentUser == null || !currentUser.getUserType().equals("DOCTOR")) {
             return;
@@ -305,11 +554,11 @@ public class DoctorController implements Initializable {
 
         String messageText = messageInput.getText().trim();
         Message newMessage = new Message(
-                0, // ID будет присвоен сервером
+                0,
                 currentUser.getUsername(),
                 selectedConversation.getParticipant(),
                 messageText,
-                null // Timestamp будет присвоен сервером
+                null
         );
 
         try {
@@ -323,7 +572,6 @@ public class DoctorController implements Initializable {
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
             if (response.statusCode() == 201) {
-                // Если успешно, очищаем поле ввода и перезагружаем сообщения
                 messageInput.clear();
                 loadConversationMessages(currentUser.getUsername(), selectedConversation.getParticipant());
                 updateStatus("Сообщение отправлено", "success");

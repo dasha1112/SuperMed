@@ -494,6 +494,55 @@ public class Model {
         return appointments;
     }
 
+    // Метод для создания связи между врачом и пользователем
+    public boolean linkDoctorToUser(int doctorId, String username) {
+        String sql = "INSERT INTO doctor_users (doctor_id, user_id) " +
+                "VALUES (?, (SELECT id FROM users WHERE username = ?))";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, doctorId);
+            pstmt.setString(2, username);
+
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("Ошибка при создании связи врач-пользователь: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // Метод для получения врача по username пользователя
+    public Doctor getDoctorByUsername(String username) {
+        String sql = "SELECT d.*, b.name as branch_name, b.address as branch_address " +
+                "FROM doctors d " +
+                "JOIN doctor_users du ON d.id = du.doctor_id " +
+                "JOIN users u ON du.user_id = u.id " +
+                "JOIN branches b ON d.branch_id = b.id " +
+                "WHERE u.username = ?";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, username);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                return new Doctor(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getString("specialization"),
+                        rs.getInt("branch_id"),
+                        rs.getString("branch_name"),
+                        rs.getString("branch_address")
+                );
+            }
+        } catch (SQLException e) {
+            System.err.println("Ошибка при получении врача по username: " + e.getMessage());
+        }
+        return null;
+    }
+
 
     // Завершение приема
     public boolean completeAppointment(int appointmentId) {
