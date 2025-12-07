@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.effect.DropShadow?>
+<?import javafx.scene.paint.Color?>
+
+<BorderPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.supermed.DoctorController"
+            style="-fx-font-family: 'Segoe UI', sans-serif; -fx-background-color: #f4f7f6;">
+
+    <top>
+        <VBox spacing="8" style="-fx-padding: 15; -fx-background-color: #ffffff; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 5);">
+            <HBox spacing="15" alignment="CENTER_LEFT">
+                <Label text="SuperMed - Панель врача" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="userInfoLabel" style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #34495e;"/>
+                <Button text="Выход" onAction="#handleLogout"
+                        style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 8 15; -fx-border-radius: 5; -fx-background-radius: 5;"/>
+            </HBox>
+            <Separator style="-fx-background-color: #bdc3c7;"/>
+            <Label fx:id="statusLabel" style="-fx-font-size: 13px; -fx-text-fill: #7f8c8d;"/>
+        </VBox>
+    </top>
+
+    <center>
+        <TabPane tabClosingPolicy="UNAVAILABLE" style="-fx-tab-min-width: 120px; -fx-tab-max-width: 120px; -fx-tab-min-height: 40px; -fx-tab-max-height: 40px;">
+            <!-- Вкладка 1: Мое расписание (приемы пациентов) -->
+            <Tab fx:id="scheduleTab" text="Мои приемы">
+                <content>
+                    <VBox spacing="15" style="-fx-padding: 20; -fx-background-color: #fdfdfd;">
+                        <HBox spacing="15" alignment="CENTER_LEFT">
+                            <Label text="Дата:" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+                            <DatePicker fx:id="datePicker" prefWidth="150" style="-fx-font-size: 14px;"/>
+                            <Label text="Показать:" style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 0 0 0 15;"/>
+                            <ComboBox fx:id="viewTypeComboBox" prefWidth="120" style="-fx-font-size: 14px;"/>
+                            <Button fx:id="todayButton" text="Сегодня" onAction="#handleShowToday"
+                                    style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 8 15; -fx-border-radius: 5; -fx-background-radius: 5;"/>
+                            <Button fx:id="weekButton" text="Неделя" onAction="#handleShowWeek"
+                                    style="-fx-background-color: #9b59b6; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 8 15; -fx-border-radius: 5; -fx-background-radius: 5;"/>
+                            <Button fx:id="refreshScheduleButton" text="Обновить" onAction="#handleRefreshScheduleTab"
+                                    style="-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 8 15; -fx-border-radius: 5; -fx-background-radius: 5;"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="scheduleStatsLabel" style="-fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-font-size: 14px;"/>
+                        </HBox>
+                        <TableView fx:id="scheduleTableView" VBox.vgrow="ALWAYS"
+                                   style="-fx-font-size: 14px; -fx-border-color: #bdc3c7; -fx-border-width: 1; -fx-border-radius: 5;">
+                            <columns>
+                                <TableColumn fx:id="scheduleDateCol" text="Дата" prefWidth="100"/>
+                                <TableColumn fx:id="scheduleTimeCol" text="Время" prefWidth="120"/>
+                                <TableColumn fx:id="schedulePatientCol" text="Пациент" prefWidth="150"/>
+                                <TableColumn fx:id="scheduleTypeCol" text="Тип приема" prefWidth="100"/>
+                                <TableColumn fx:id="scheduleStatusCol" text="Статус" prefWidth="100"/>
+                                <TableColumn fx:id="scheduleActionsCol" text="Действие" prefWidth="120"/>
+                            </columns>
+                            <columnResizePolicy>
+                                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                            </columnResizePolicy>
+                        </TableView>
+                    </VBox>
+                </content>
+            </Tab>
+            <!-- Вкладка 2: Рабочее расписание (когда врач работает) -->
+            <Tab text="Мое рабочее расписание">
+                <content>
+                    <VBox spacing="15" style="-fx-padding: 20; -fx-background-color: #fdfdfd;">
+                        <HBox spacing="15" alignment="CENTER_LEFT">
+                            <Label text="График работы" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Button fx:id="refreshWorkScheduleButton" text="Обновить" onAction="#refreshWorkSchedule"
+                                    style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 8 15; -fx-border-radius: 5; -fx-background-radius: 5;"/>
+                            <Label fx:id="workScheduleLabel" style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #34495e;"/>
+                        </HBox>
+                        <TableView fx:id="workScheduleTable" VBox.vgrow="ALWAYS"
+                                   style="-fx-font-size: 14px; -fx-border-color: #bdc3c7; -fx-border-width: 1; -fx-border-radius: 5;">
+                            <columns>
+                                <TableColumn fx:id="colDayOfWeek" text="День недели" prefWidth="150"/>
+                                <TableColumn fx:id="colWorkHours" text="Часы работы" prefWidth="150"/>
+                                <TableColumn fx:id="colBranch" text="Филиал" prefWidth="200"/>
+                            </columns>
+                            <columnResizePolicy>
+                                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                            </columnResizePolicy>
+                        </TableView>
+                    </VBox>
+                </content>
+            </Tab>
+            <!-- Вкладка 3: Сообщения -->
+            <Tab text="Сообщения">
+                <content>
+                    <HBox spacing="15" style="-fx-padding: 20; -fx-background-color: #fdfdfd;">
+                        <VBox spacing="10" prefWidth="320" style="-fx-background-color: #f0f2f5; -fx-border-radius: 8; -fx-padding: 10;">
+                            <Label text="Диалоги с пациентами:" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                            <ListView fx:id="conversationListView" VBox.vgrow="ALWAYS"
+                                      style="-fx-font-size: 14px; -fx-border-color: #dcdcdc; -fx-border-width: 1; -fx-border-radius: 5; -fx-background-color: #ffffff;"/>
+                            <Button text="Обновить диалоги" onAction="#loadConversations"
+                                    style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 8 15; -fx-border-radius: 5; -fx-background-radius: 5;"/>
+                        </VBox>
+                        <VBox spacing="10" HBox.hgrow="ALWAYS" style="-fx-background-color: #ffffff; -fx-border-radius: 8; -fx-padding: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 5, 0, 0, 2);">
+                            <Label fx:id="currentConversationLabel" text="Выберите диалог"
+                                   style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                            <TextArea fx:id="messageHistoryArea" VBox.vgrow="ALWAYS"
+                                      editable="false" wrapText="true"
+                                      style="-fx-font-size: 14px; -fx-border-color: #e0e0e0; -fx-border-width: 1; -fx-border-radius: 5; -fx-control-inner-background: #f9f9f9;"/>
+                            <HBox spacing="8">
+                                <TextField fx:id="messageInput" HBox.hgrow="ALWAYS"
+                                           promptText="Введите сообщение..."
+                                           style="-fx-font-size: 14px; -fx-padding: 10; -fx-border-color: #dcdcdc; -fx-border-width: 1; -fx-border-radius: 5;"/>
+                                <Button text="Отправить" onAction="#sendMessage"
+                                        style="-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10 20; -fx-border-radius: 5; -fx-background-radius: 5;"/>
+                            </HBox>
+                        </VBox>
+                    </HBox>
+                </content>
+            </Tab>
+        </TabPane>
+    </center>
+</BorderPane>
