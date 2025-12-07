@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<?import javafx.scene.control.ListView?>
+<AnchorPane prefHeight="700.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.supermed.DoctorController">
+    <children>
+        <VBox alignment="TOP_CENTER" prefHeight="700.0" prefWidth="1000.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <children>
+                <HBox alignment="CENTER_LEFT" prefHeight="50.0" prefWidth="200.0" style="-fx-background-color: #2c3e50;">
+                    <children>
+                        <Label fx:id="userInfoLabel" text="Пользователь: Доктор (Врач)" textFill="WHITE">
+                            <font>
+                                <Font name="System Bold" size="14.0" />
+                            </font>
+                            <HBox.margin>
+                                <Insets left="20.0" />
+                            </HBox.margin>
+                        </Label>
+                        <HBox alignment="CENTER_RIGHT" prefHeight="50.0" prefWidth="800.0">
+                            <children>
+                                <Label fx:id="statusLabel" textFill="WHITE">
+                                    <HBox.margin>
+                                        <Insets right="20.0" />
+                                    </HBox.margin>
+                                </Label>
+                                <Button onAction="#handleLogout" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold;" text="Выход">
+                                    <HBox.margin>
+                                        <Insets right="20.0" />
+                                    </HBox.margin>
+                                </Button>
+                            </children>
+                        </HBox>
+                    </children>
+                </HBox>
+                <TabPane prefHeight="650.0" prefWidth="1000.0" tabClosingPolicy="UNAVAILABLE">
+                    <tabs>
+                        <Tab text="Расписание">
+                            <content>
+                                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                                    <children>
+                                        <VBox alignment="TOP_CENTER" layoutX="14.0" layoutY="14.0" prefHeight="600.0" prefWidth="970.0" AnchorPane.bottomAnchor="14.0" AnchorPane.leftAnchor="14.0" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="14.0">
+                                            <children>
+                                                <Label style="-fx-font-weight: bold; -fx-font-size: 16px;" text="Мое расписание">
+                                                    <VBox.margin>
+                                                        <Insets bottom="10.0" top="10.0" />
+                                                    </VBox.margin>
+                                                </Label>
+                                                <TableView fx:id="doctorScheduleTable" prefHeight="500.0" prefWidth="970.0">
+                                                    <columns>
+                                                        <TableColumn fx:id="colPatName" prefWidth="150.0" text="Пациент" />
+                                                        <TableColumn fx:id="colAppDate" prefWidth="100.0" text="Дата" />
+                                                        <TableColumn fx:id="colAppTimeStart" prefWidth="80.0" text="Начало" />
+                                                        <TableColumn fx:id="colAppTimeEnd" prefWidth="80.0" text="Конец" />
+                                                        <TableColumn fx:id="colAppSecretId" prefWidth="100.0" text="Secret ID" />
+                                                        <TableColumn fx:id="colAppStatus" prefWidth="100.0" text="Статус" />
+                                                        <TableColumn fx:id="colAppActions" prefWidth="150.0" text="Действия" />
+                                                    </columns>
+                                                    <VBox.margin>
+                                                        <Insets bottom="10.0" />
+                                                    </VBox.margin>
+                                                </TableView>
+                                                <Label fx:id="scheduleCountLabel" text="Всего записей: 0">
+                                                    <font>
+                                                        <Font name="System Bold" size="12.0" />
+                                                    </font>
+                                                    <VBox.margin>
+                                                        <Insets bottom="10.0" />
+                                                    </VBox.margin>
+                                                </Label>
+                                                <Button onAction="#refreshSchedule" style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-weight: bold;" text="Обновить расписание" />
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </AnchorPane>
+                            </content>
+                        </Tab>
+                        <Tab text="Сообщения">
+                            <content>
+                                <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                                    <children>
+                                        <HBox alignment="TOP_CENTER" layoutX="14.0" layoutY="14.0" prefHeight="600.0" prefWidth="970.0" AnchorPane.bottomAnchor="14.0" AnchorPane.leftAnchor="14.0" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="14.0">
+                                            <children>
+                                                <VBox prefHeight="572.0" prefWidth="250.0" style="-fx-border-color: #bdc3c7; -fx-border-width: 1; -fx-border-radius: 5;">
+                                                    <HBox.margin>
+                                                        <Insets right="10.0" />
+                                                    </HBox.margin>
+                                                    <children>
+                                                        <Label alignment="CENTER" maxWidth="1.7976931348623157E308" style="-fx-font-weight: bold; -fx-background-color: #ecf0f1; -fx-padding: 10;" text="Диалоги">
+                                                            <VBox.margin>
+                                                                <Insets bottom="5.0" />
+                                                            </VBox.margin>
+                                                        </Label>
+                                                        <ListView fx:id="conversationListView" prefHeight="530.0" prefWidth="200.0" />
+                                                    </children>
+                                                </VBox>
+                                                <VBox prefHeight="572.0" prefWidth="710.0" style="-fx-border-color: #bdc3c7; -fx-border-width: 1; -fx-border-radius: 5;">
+                                                    <children>
+                                                        <Label fx:id="currentConversationLabel" alignment="CENTER" maxWidth="1.7976931348623157E308" style="-fx-font-weight: bold; -fx-background-color: #ecf0f1; -fx-padding: 10;" text="Выберите диалог">
+                                                            <VBox.margin>
+                                                                <Insets bottom="5.0" />
+                                                            </VBox.margin>
+                                                        </Label>
+                                                        <TextArea fx:id="messageHistoryArea" editable="false" prefHeight="400.0" prefWidth="200.0" wrapText="true" VBox.vgrow="ALWAYS">
+                                                            <VBox.margin>
+                                                                <Insets left="5.0" right="5.0" />
+                                                            </VBox.margin>
+                                                        </TextArea>
+                                                        <HBox alignment="CENTER" prefHeight="50.0" prefWidth="200.0">
+                                                            <VBox.margin>
+                                                                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                                            </VBox.margin>
+                                                            <children>
+                                                                <TextField fx:id="messageInput" onAction="#sendMessage" prefHeight="35.0" prefWidth="580.0" promptText="Введите сообщение..." HBox.hgrow="ALWAYS" />
+                                                                <Button onAction="#sendMessage" prefHeight="35.0" style="-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-font-weight: bold;" text="Отправить">
+                                                                    <HBox.margin>
+                                                                        <Insets left="10.0" />
+                                                                    </HBox.margin>
+                                                                </Button>
+                                                            </children>
+                                                        </HBox>
+                                                    </children>
+                                                </VBox>
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </AnchorPane>
+                            </content>
+                        </Tab>
+                    </tabs>
+                </TabPane>
+            </children>
+        </VBox>
+    </children>
+</AnchorPane>
