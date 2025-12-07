@@ -54,7 +54,7 @@ public class BranchActivityTest {
             server.shutdown();
         }
     }
-
+    //экран «Филиалы» должен показать список клиник, полученный с сервера.
     @Test
     public void branchesAreRenderedFromServer() throws Exception {
         Buffer body = new Buffer();

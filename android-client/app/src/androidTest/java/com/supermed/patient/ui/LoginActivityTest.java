@@ -31,7 +31,7 @@ public class LoginActivityTest {
         SharedPreferences prefs = context.getSharedPreferences("user_session", Context.MODE_PRIVATE);
         prefs.edit().clear().commit();
     }
-
+    //пользователь нажимает «Войти» с пустыми полями логина/пароля.
     @Test
     public void emptyCredentials_doesNotPersistSession() {
         try (ActivityScenario<LoginActivity> scenario = ActivityScenario.launch(LoginActivity.class)) {
@@ -43,7 +43,7 @@ public class LoginActivityTest {
             });
         }
     }
-
+    //пользователь нажимает «Регистрация» на форме логина.
     @Test
     public void registerButton_opensRegisterScreen() {
         try (ActivityScenario<LoginActivity> scenario = ActivityScenario.launch(LoginActivity.class)) {

@@ -62,7 +62,7 @@ public class MainActivityTest {
             server.shutdown();
         }
     }
-
+    //пользователь нажимает «Выйти».
     @Test
     public void logoutClearsSession() {
         try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
@@ -72,7 +72,7 @@ public class MainActivityTest {
             assertFalse(prefs.contains("username"));
         }
     }
-
+    //проверка навигации с главного экрана. проверяет, что запускается BranchActivity; после завершения возвращается обратно.
     @Test
     public void navigationOpensBranchesAndAppointments() throws Exception {
         Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();

@@ -10,7 +10,7 @@ import org.junit.Test;
 public class JsonMappingTest {
 
     private final Gson gson = new Gson();
-
+    //сервер по какой-то причине не прислал branchName
     @Test
     public void schedule_withoutBranchName_parsesCoreFields() {
         String json = "{"
@@ -30,7 +30,7 @@ public class JsonMappingTest {
         assertEquals("Понедельник", schedule.getDayOfWeek());
         assertNull(schedule.getBranchName());
     }
-
+    //нормальный ответ сервера с одним приёмом.
     @Test
     public void appointment_parsesAllFields() {
         String json = "{"

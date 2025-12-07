@@ -47,7 +47,7 @@ public class RegisterActivityTest {
             server.shutdown();
         }
     }
-
+    //пользователь ввёл два разных пароля.
     @Test
     public void mismatchedPasswords_doesNotFinish() {
         try (ActivityScenario<RegisterActivity> scenario = ActivityScenario.launch(RegisterActivity.class)) {
@@ -59,7 +59,7 @@ public class RegisterActivityTest {
             scenario.onActivity(activity -> assertFalse(activity.isFinishing()));
         }
     }
-
+    //пользователь корректно заполнил все поля, сервер вернул 201.
     @Test
     public void successfulRegistration_finishesActivity() throws Exception {
         server.enqueue(new MockResponse()

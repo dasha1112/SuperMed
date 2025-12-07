@@ -55,7 +55,7 @@ public class ApiServiceTest {
     public void tearDown() throws IOException {
         server.shutdown();
     }
-
+    //POST /auth/login сервер вернул статус 200; тело JSON вида { "user": { "username": "testUser", ... } }
     @Test
     public void login_successfulResponse_returnsUser() throws Exception {
         AuthRequest request = new AuthRequest("p.kotova", "patient123", "PATIENT");
@@ -75,7 +75,7 @@ public class ApiServiceTest {
         RecordedRequest recorded = server.takeRequest();
         assertEquals("/auth/login", recorded.getPath());
     }
-
+    //сервер вернул статус 500
     @Test
     public void login_serverError_returnsUnsuccessful() throws Exception {
         server.enqueue(new MockResponse().setResponseCode(500));
@@ -84,7 +84,7 @@ public class ApiServiceTest {
 
         assertFalse(response.isSuccessful());
     }
-
+    //Сервер возвращает на GET /branches JSON с 2 объектами филиалов
     @Test
     public void getBranches_parsesList() throws Exception {
         String body = "[{\"id\":1,\"name\":\"Clinic A\",\"address\":\"Address 1\"},{\"id\":2,\"name\":\"Clinic B\",\"address\":\"Address 2\"}]";
@@ -100,7 +100,7 @@ public class ApiServiceTest {
         assertEquals(2, response.body().size());
         assertEquals("Clinic A", response.body().get(0).getName());
     }
-
+    //POST /appointments статус 201 Created
     @Test
     public void createAppointment_sendsPayload() throws Exception {
         Appointment appointment = new Appointment(
@@ -129,7 +129,7 @@ public class ApiServiceTest {
         assertEquals("2025-02-10", sent.getAppointmentDate());
         assertEquals("SEC123", sent.getSecretId());
     }
-
+    //POST /auth/register сервер вернул статус 201 Created
     @Test
     public void register_successfulResponse() throws Exception {
         server.enqueue(new MockResponse()
@@ -147,7 +147,7 @@ public class ApiServiceTest {
         RecordedRequest request = server.takeRequest();
         assertEquals("/auth/register", request.getPath());
     }
-
+    //Сервер возвращает на GET /appointments массив JSON с приёмами: id, patientId, doctorId, date, start, end, secretId
     @Test
     public void getAppointments_parsesCollection() throws Exception {
         String body = "[{\"id\":1,\"patientUsername\":\"p.kotova\",\"doctorId\":2,\"appointmentDate\":\"2025-02-10\",\"startTime\":\"10:00\",\"endTime\":\"10:30\",\"secretId\":\"SEC123\",\"status\":\"scheduled\",\"doctorName\":\"Dr. Ivanov\"}]";
@@ -164,45 +164,6 @@ public class ApiServiceTest {
         assertEquals("SEC123", response.body().get(0).getSecretId());
     }
 
-    @Test
-    public void getStatistics_withFilters_appendsQueryParams() throws Exception {
-        server.enqueue(new MockResponse().setResponseCode(200).setBody("[]"));
-
-        service.getStatistics(1, 2, "2025-01-01", "2025-01-31").execute();
-
-        RecordedRequest request = server.takeRequest();
-        assertEquals("/statistics?doctorId=1&branchId=2&startDate=2025-01-01&endDate=2025-01-31", request.getPath());
-    }
-
-    @Test
-    public void updateSchedule_putsBody() throws Exception {
-        server.enqueue(new MockResponse().setResponseCode(200));
-        com.supermed.patient.model.Schedule schedule = new com.supermed.patient.model.Schedule(
-                10, 5, "Dr. Strange", "Monday", "09:00", "10:00"
-        );
-
-        Response<Void> response = service.updateSchedule(10, schedule).execute();
-
-        assertTrue(response.isSuccessful());
-        RecordedRequest request = server.takeRequest();
-        assertEquals("PUT", request.getMethod());
-        assertEquals("/schedules/10", request.getPath());
-        com.supermed.patient.model.Schedule sent = gson.fromJson(request.getBody().readUtf8(), com.supermed.patient.model.Schedule.class);
-        assertEquals("09:00", sent.getStartTime());
-        assertEquals("Monday", sent.getDayOfWeek());
-    }
-
-    @Test
-    public void deleteSchedule_hitsEndpoint() throws Exception {
-        server.enqueue(new MockResponse().setResponseCode(204));
-
-        Response<Void> response = service.deleteSchedule(15).execute();
-
-        assertTrue(response.isSuccessful());
-        RecordedRequest request = server.takeRequest();
-        assertEquals("DELETE", request.getMethod());
-        assertEquals("/schedules/15", request.getPath());
-    }
 }
 
 

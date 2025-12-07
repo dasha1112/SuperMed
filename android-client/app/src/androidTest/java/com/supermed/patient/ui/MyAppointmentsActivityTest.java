@@ -57,7 +57,7 @@ public class MyAppointmentsActivityTest {
             server.shutdown();
         }
     }
-
+    //экран «Мои записи» должен показывать только записи текущего пользователя, даже если сервер отдаёт всех.
     @Test
     public void showsOnlyCurrentUserAppointments() {
         server.enqueue(new MockResponse().setResponseCode(200)
