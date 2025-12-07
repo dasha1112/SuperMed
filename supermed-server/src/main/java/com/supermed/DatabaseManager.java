@@ -66,6 +66,15 @@ public class DatabaseManager {
                         "FOREIGN KEY(sender_username) REFERENCES users(username), " +
                         "FOREIGN KEY(receiver_username) REFERENCES users(username));";
 
+                String sqlDoctorUsers = "CREATE TABLE IF NOT EXISTS doctor_users (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                        "doctor_id INTEGER NOT NULL, " +
+                        "user_id INTEGER NOT NULL, " +
+                        "FOREIGN KEY(doctor_id) REFERENCES doctors(id), " +
+                        "FOREIGN KEY(user_id) REFERENCES users(id), " +
+                        "UNIQUE(doctor_id, user_id));";
+
+                stmt.execute(sqlDoctorUsers);
                 stmt.execute(sqlUsers);
                 stmt.execute(sqlBranches);
                 stmt.execute(sqlDoctors);
@@ -85,6 +94,8 @@ public class DatabaseManager {
                     String doctorPassword = hashPassword("doctor123");
                     stmt.execute("INSERT INTO users (username, password, user_type, created_at) VALUES " +
                             "('d.ivanov', '" + doctorPassword + "', 'DOCTOR', datetime('now'))");
+                    //stmt.execute("INSERT INTO doctors (name, specialization, branch_id) VALUES " +
+                    //        "('d.ivanov', 'Кардиолог', 1)");
 
                     // Создаем тестовых пациентов (для входа в систему)
                     String patientPassword = hashPassword("patient123");
@@ -124,7 +135,13 @@ public class DatabaseManager {
                             "('p.kotova', 1, '2025-01-20', '10:00', '10:30', 'SEC001', 'scheduled'), " +
                             "('m.maskov', 1, '2025-01-20', '11:00', '11:30', 'SEC002', 'scheduled'), " +
                             "('a.smirnova', 1, '2025-01-20', '12:00', '12:30', 'SEC003', 'scheduled'), " +
-                            "('v.petrov', 1, '2025-01-21', '09:00', '09:30', 'SEC004', 'scheduled'), " +
+                            "('p.kotova', 1, '2025-12-15', '10:00', '10:30', 'SEC001', 'scheduled'), " +
+                            "('m.maskov', 1, '2025-12-8', '11:00', '11:30', 'SEC002', 'scheduled'), " +
+                            "('a.smirnova', 1, '2025-12-10', '12:00', '12:30', 'SEC003', 'scheduled'), " +
+                            "('p.kotova', 1, '2025-12-17', '10:00', '10:30', 'SEC001', 'scheduled'), " +
+                            "('m.maskov', 1, '2025-12-22', '11:00', '11:30', 'SEC002', 'scheduled'), " +
+                            "('a.smirnova', 1, '2025-12-10', '12:00', '12:30', 'SEC003', 'scheduled'), " +
+                            "('v.petrov', 1, '2025-01-24', '09:00', '09:30', 'SEC004', 'scheduled'), " +
                             "('p.kotova', 2, '2025-01-21', '14:00', '14:30', 'SEC005', 'scheduled'), " +
                             "('m.maskov', 2, '2025-01-22', '15:00', '15:30', 'SEC006', 'scheduled'), " +
                             "('a.smirnova', 2, '2025-01-22', '16:00', '16:30', 'SEC007', 'scheduled'), " +
@@ -145,6 +162,9 @@ public class DatabaseManager {
                             "('v.petrov', 'd.ivanov', 'Добрый день! Нужна консультация по результатам анализов.', '2025-01-17 14:20:00'), " +
                             "('d.ivanov', 'v.petrov', 'Здравствуйте! Присылайте результаты, посмотрю.', '2025-01-17 14:30:00')");
                 }
+                String linkDoctorUser = "INSERT OR IGNORE INTO doctor_users (doctor_id, user_id) VALUES (" +
+                        "1, (SELECT id FROM users WHERE username = 'd.ivanov'))";
+                stmt.execute(linkDoctorUser);
 
                 System.out.println("База данных инициализирована успешно.");
             }

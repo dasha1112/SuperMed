@@ -55,5 +55,10 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(this, LoginActivity.class));
             finish();
         });
+
+        Button btnMessages = findViewById(R.id.btn_messages);
+        btnMessages.setOnClickListener(v -> {
+            startActivity(new Intent(MainActivity.this, ConversationsActivity.class));
+        });
     }
 }

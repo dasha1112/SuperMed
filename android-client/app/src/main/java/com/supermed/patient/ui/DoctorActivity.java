@@ -93,7 +93,7 @@ public class DoctorActivity extends AppCompatActivity {
             }
         });
 
-        // Нажатие на врача → расписание
+        // Нажатие на врача - расписание
         listView.setOnItemClickListener((parent, view, position, id) -> {
             Doctor doctor = adapter.getItem(position);
             Intent intent = new Intent(DoctorActivity.this, ScheduleActivity.class);

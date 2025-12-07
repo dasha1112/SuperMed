@@ -3,11 +3,11 @@ package com.supermed.patient.model;
 public class Schedule {
     private int id;
     private int doctorId;
-    private String doctorName;      // ← добавлено сервером через JOIN
-    private String dayOfWeek;       // например: "Понедельник", "Вторник"
-    private String startTime;       // например: "09:00"
-    private String endTime;         // например: "17:00"
-    private String branchName;      // ← добавлено сервером через JOIN
+    private String doctorName;
+    private String dayOfWeek;
+    private String startTime;
+    private String endTime;
+    private String branchName;
 
     public Schedule() {}
 

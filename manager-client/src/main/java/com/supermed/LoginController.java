@@ -115,28 +115,47 @@ public class LoginController implements Initializable {
         try {
             // Закрываем текущее окно
             Stage currentStage = (Stage) usernameField.getScene().getWindow();
-
-            // Загружаем главное окно
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/main_view.fxml"));
-            Parent root = loader.load();
-
-            // Передаем данные пользователя в главный контроллер
-            ManagerController mainController = loader.getController();
-            mainController.setCurrentUser(user);
-
-            Stage mainStage = new Stage();
-            mainStage.setTitle("SuperMed - " + getUserTypeDisplayName(user.getUserType()));
-            mainStage.setScene(new Scene(root, 1000, 700));
-            mainStage.setMinWidth(900);
-            mainStage.setMinHeight(600);
-            mainStage.show();
-
-            // Закрываем окно входа
-            currentStage.close();
-
+            // Загружаем главное окно в зависимости от userType
+            FXMLLoader loader;
+            String fxmlPath;
+            String title;
+            switch (user.getUserType()) {
+                case "MANAGER":
+                    fxmlPath = "/main_view.fxml";
+                    title = "SuperMed - Панель менеджера";
+                    loader = new FXMLLoader(getClass().getResource(fxmlPath));
+                    Parent managerRoot = loader.load();
+                    ManagerController managerController = loader.getController();
+                    managerController.setCurrentUser(user);
+                    openNewStage(managerRoot, title, currentStage);
+                    break;
+                case "DOCTOR":
+                    fxmlPath = "/doctor_view.fxml"; // Новый FXML для доктора
+                    title = "SuperMed - Панель врача";
+                    loader = new FXMLLoader(getClass().getResource(fxmlPath));
+                    Parent doctorRoot = loader.load();
+                    DoctorController doctorController = loader.getController(); // Новый контроллер
+                    doctorController.setCurrentUser(user);
+                    openNewStage(doctorRoot, title, currentStage);
+                    break;
+                case "PATIENT":
+                    break;
+                default:
+                    break;
+            }
         } catch (IOException e) {
             showStatus("Ошибка загрузки главного окна", "error");
+            e.printStackTrace(); // Для отладки
         }
+    }
+    private void openNewStage(Parent root, String title, Stage currentStage) {
+        Stage newStage = new Stage();
+        newStage.setTitle(title);
+        newStage.setScene(new Scene(root, 1000, 700)); // Задайте желаемый размер
+        newStage.setMinWidth(900);
+        newStage.setMinHeight(600);
+        newStage.show();
+        currentStage.close();
     }
 
     private String getUserTypeDisplayName(String userType) {

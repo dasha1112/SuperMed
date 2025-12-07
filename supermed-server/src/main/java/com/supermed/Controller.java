@@ -2,9 +2,15 @@ package com.supermed;
 
 import com.google.gson.Gson;
 import com.supermed.entities.*;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import static spark.Spark.*;
-
+import java.util.Map;
 public class Controller {
     private static final Gson gson = new Gson();
     private static final Model model = new Model();
@@ -192,6 +198,99 @@ public class Controller {
             String patientUsername = req.queryParams("patient");
             List<Message> messages = model.getConversationMessages(doctorUsername, patientUsername);
             return gson.toJson(messages);
+        });
+
+        // Создание связи врач-пользователь
+        post("/api/doctor/link", (req, res) -> {
+            Map<String, String> requestData = gson.fromJson(req.body(), Map.class);
+            int doctorId = Integer.parseInt(requestData.get("doctorId"));
+            String username = requestData.get("username");
+
+            boolean success = model.linkDoctorToUser(doctorId, username);
+
+            if (success) {
+                return "{\"message\": \"Связь создана успешно\"}";
+            } else {
+                res.status(400);
+                return "{\"error\": \"Не удалось создать связь\"}";
+            }
+        });
+
+        // Получение информации о враче по username
+        get("/api/doctor/info/:username", (req, res) -> {
+            String username = req.params("username");
+            Doctor doctor = model.getDoctorByUsername(username);
+
+            if (doctor != null) {
+                return gson.toJson(doctor);
+            } else {
+                res.status(404);
+                return "{\"error\": \"Врач не найден\"}";
+            }
+        });
+
+        // Получение рабочего расписания врача
+        get("/api/doctor/:username/work-schedule", (req, res) -> {
+            String username = req.params("username");
+
+            // Сначала получаем ID врача
+            String doctorIdQuery = "SELECT d.id FROM doctors d " +
+                    "JOIN doctor_users du ON d.id = du.doctor_id " +
+                    "JOIN users u ON du.user_id = u.id " +
+                    "WHERE u.username = ?";
+
+            try (Connection conn = DatabaseManager.getConnection();
+                 PreparedStatement pstmt = conn.prepareStatement(doctorIdQuery)) {
+
+                pstmt.setString(1, username);
+                ResultSet rs = pstmt.executeQuery();
+
+                if (rs.next()) {
+                    int doctorId = rs.getInt("id");
+
+                    // Получаем расписание врача
+                    String scheduleQuery = "SELECT s.*, d.name as doctor_name, b.name as branch_name " +
+                            "FROM schedules s " +
+                            "JOIN doctors d ON s.doctor_id = d.id " +
+                            "JOIN branches b ON d.branch_id = b.id " +
+                            "WHERE s.doctor_id = ? " +
+                            "ORDER BY CASE s.day_of_week " +
+                            "    WHEN 'Понедельник' THEN 1 " +
+                            "    WHEN 'Вторник' THEN 2 " +
+                            "    WHEN 'Среда' THEN 3 " +
+                            "    WHEN 'Четверг' THEN 4 " +
+                            "    WHEN 'Пятница' THEN 5 " +
+                            "    WHEN 'Суббота' THEN 6 " +
+                            "    WHEN 'Воскресенье' THEN 7 " +
+                            "END";
+
+                    try (PreparedStatement scheduleStmt = conn.prepareStatement(scheduleQuery)) {
+                        scheduleStmt.setInt(1, doctorId);
+                        ResultSet scheduleRs = scheduleStmt.executeQuery();
+
+                        List<Schedule> schedules = new ArrayList<>();
+                        while (scheduleRs.next()) {
+                            Schedule schedule = new Schedule(
+                                    scheduleRs.getInt("id"),
+                                    scheduleRs.getInt("doctor_id"),
+                                    scheduleRs.getString("doctor_name"),
+                                    scheduleRs.getString("day_of_week"),
+                                    scheduleRs.getString("start_time"),
+                                    scheduleRs.getString("end_time")
+                            );
+                            schedule.setBranchName(scheduleRs.getString("branch_name"));
+                            schedules.add(schedule);
+                        }
+                        return gson.toJson(schedules);
+                    }
+                } else {
+                    res.status(404);
+                    return "{\"error\": \"Врач не найден\"}";
+                }
+            } catch (SQLException e) {
+                res.status(500);
+                return "{\"error\": \"Ошибка базы данных\"}";
+            }
         });
     }
 }
