@@ -8,8 +8,8 @@ public class Appointment {
     private String startTime;       // формат: "HH:mm"
     private String endTime;         // формат: "HH:mm"
     private String secretId;
-    private String status;          // например: "scheduled", "completed"
-    private String doctorName;      // ← добавлено сервером через JOIN
+    private String status;
+    private String doctorName;
 
     public Appointment() {}
 
@@ -48,8 +48,6 @@ public class Appointment {
     public void setSecretId(String secretId) { this.secretId = secretId; }
     public void setStatus(String status) { this.status = status; }
     public void setDoctorName(String doctorName) { this.doctorName = doctorName; }
-
-    // Удобный метод для отображения даты + времени
     public String getDisplayTime() {
         return appointmentDate + " " + startTime;
     }

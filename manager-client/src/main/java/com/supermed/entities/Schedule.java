@@ -82,5 +82,9 @@ public class Schedule {
         this.endTime = endTime;
         calculateWorkingHours();
     }
+
+    public String getWorkHours() {
+        return startTime + " - " + endTime;
+    }
     public int getWorkingHours() { return workingHours; }
 }

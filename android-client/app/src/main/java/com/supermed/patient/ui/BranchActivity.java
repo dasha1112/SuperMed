@@ -81,7 +81,7 @@ public class BranchActivity extends AppCompatActivity {
         });
     }
 
-    // === Вложенный адаптер (статический, чтобы избежать утечек) ===
+    // === Вложенный адаптер  ===
     public static class BranchAdapter extends ArrayAdapter<Branch> {
 
         public BranchAdapter(@NonNull Context context, int resource) {

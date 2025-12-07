@@ -14,43 +14,45 @@
         android:text="Здравствуйте, Пациент!"
         android:textSize="24sp"
         android:textStyle="bold"
-        android:textColor="#111"
         android:layout_marginBottom="32dp"
         android:textAlignment="center" />
 
     <Button
         android:id="@+id/btn_branches"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="70sp"
+        android:layout_marginBottom="10dp"
         android:text="Выбрать филиал и врача"
-        android:layout_marginBottom="16dp"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:gravity="left"
-        android:textColor="#444"
-        style="@style/Widget.MaterialComponents.Button" />
+        android:textSize="22sp"
+        android:backgroundTint="#3498DB"
+        android:textColor="#fff" />
 
     <Button
         android:id="@+id/btn_my_appointments"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="70sp"
         android:text="Мои записи"
-        android:layout_marginBottom="16dp"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:gravity="left"
-        android:textColor="#444"
-        style="@style/Widget.MaterialComponents.Button" />
+        android:layout_marginBottom="10dp"
+        android:textSize="22sp"
+        android:backgroundTint="#3498DB"
+        android:textColor="#fff" />
+    <Button
+        android:id="@+id/btn_messages"
+        android:layout_width="match_parent"
+        android:layout_height="70sp"
+        android:layout_marginBottom="10dp"
+        android:textSize="22sp"
+        android:textColor="#fff"
+        android:backgroundTint="#3498DB"
+        android:text="Сообщения" />
 
     <Button
         android:id="@+id/btn_logout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="70sp"
         android:text="Выйти из аккаунта"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:gravity="left"
-        android:textColor="#444"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+        android:textSize="22sp"
+        android:backgroundTint="#3498DB"
+        android:textColor="#fff" />
 
 </LinearLayout>

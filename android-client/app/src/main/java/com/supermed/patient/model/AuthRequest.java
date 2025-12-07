@@ -3,7 +3,7 @@ package com.supermed.patient.model;
 public class AuthRequest {
     private String username;
     private String password;
-    private String userType; // "PATIENT", "DOCTOR", "MANAGER"
+    private String userType;
 
     public AuthRequest() {}
 
