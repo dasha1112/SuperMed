@@ -20,9 +20,9 @@ SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further detail
 Сервер SuperMed запущен на http://localhost:4567
 ```
 
-3. Далее, в новом окне Intelli IDEA откройте папку manager-client и настройте конфигурацию для ManagerClient следующим обраом:
+3. Далее, в новом окне Intelli IDEA откройте папку manager-client и настройте конфигурацию для MainClient следующим обраом:
 * В верхнем меню выберите Run → Edit Configurations...
-* Найдите конфигурацию для ManagerClient (или создайте новую)
+* Найдите конфигурацию для MainClient (или создайте новую)
 * В поле VM options добавьте:
 ```sh
 --module-path "C:\path\to\javafx-sdk-17.0.6\lib" --add-modules javafx.controls,javafx.fxml
@@ -40,16 +40,18 @@ Error: JavaFX runtime components are missing, and are required to run this appli
 Если все заработало корректно, то у вас должно появиться окно входа, которое выглядит следующим образом:
 ![Loggin](./Instructions/Loggin.PNG)
 
-## Описание запуска веб-клиента врача
-Перейдите в папку web-client/doctor и найдите файл login.html, щелкните на него 2 раза и вы перейдете на следующее окно в браузере:
+Далее необходимо ввести тестовые данные для менеджера (m.shemelova, manager123) и в клиента менеджера.
 
-![web-client](./Instructions/web-client.PNG)
+## Описание запуска клиента врача
 
-Для входа используйте тестовые данные, указанные в нижней части панели входа.
+Запуск аналогичен запуску менеджера, только в окне входа необходимо ввести тестовые данные для врача (d.ivanov, doctor123)
 
 ## Описание запуска android клиента пациента
 
+Для запуска необходимо установить эмулятор андроида (Android studio), сбилдить проект и запустить его. Тестовые данные для пациента: p.kotova patient123
+
 ## Описание запуска тестов для сервера
+
 Тесты для сервера имеют следующую структуру:
 
 ![structure_tests_server](./Instructions/structure_tests_server.PNG)
@@ -68,6 +70,10 @@ Error: JavaFX runtime components are missing, and are required to run this appli
 
 ![successfully_server_tests](./Instructions/successfully_server_tests.PNG)
 
-При изменении кода на сервере, убедитесь, что все тесты все еще проходят успешно! Возможно вам понадобится их моифицировать.
+## Описание запуска тестов для клиентов менеджера и доктора
 
-Описание, всех классов и проекта в целом, а также рекомендации по работе с ним находятся в файле Instructions/Code.docx , советую с ним ознакомиться.
+Тесты находятся в папку manager-client и имеют следующую структуру:
+
+![structure_tests_server](./Instructions/structure_tests_manger_doctor.PNG)
+
+Для их запуска не нужны дополнительные зависимости или параметры, достаточно свыполнить Run
