@@ -3,7 +3,9 @@ package com.supermed;
 import com.supermed.entities.*;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 // Класс, описывающий большую часть функционала
 public class Model {
@@ -441,8 +443,11 @@ public class Model {
     public List<Appointment> getDoctorSchedule(String username) {
         List<Appointment> appointments = new ArrayList<>();
 
-        // Сначала получим ID врача по username
-        String doctorIdQuery = "SELECT id FROM doctors WHERE name = (SELECT name FROM users WHERE username = ?)";
+        // Получаем ID врача через таблицу связей
+        String doctorIdQuery = "SELECT d.id FROM doctors d " +
+                "JOIN doctor_users du ON d.id = du.doctor_id " +
+                "JOIN users u ON du.user_id = u.id " +
+                "WHERE u.username = ?";
 
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(doctorIdQuery)) {
@@ -453,12 +458,11 @@ public class Model {
             if (rs.next()) {
                 int doctorId = rs.getInt("id");
 
-                // Теперь получим расписание для этого врача
+                // Получаем расписание врача
                 String sql = "SELECT a.*, d.name as doctor_name " +
                         "FROM appointments a " +
                         "JOIN doctors d ON a.doctor_id = d.id " +
                         "WHERE a.doctor_id = ? " +
-                        "AND a.appointment_date >= date('now') " +
                         "ORDER BY a.appointment_date, a.start_time";
 
                 try (PreparedStatement scheduleStmt = conn.prepareStatement(sql)) {
@@ -468,7 +472,7 @@ public class Model {
                     while (scheduleRs.next()) {
                         Appointment appointment = new Appointment(
                                 scheduleRs.getInt("id"),
-                                scheduleRs.getString("patient_username"), // Используем логин пациента
+                                scheduleRs.getString("patient_username"),
                                 scheduleRs.getInt("doctor_id"),
                                 scheduleRs.getString("appointment_date"),
                                 scheduleRs.getString("start_time"),
@@ -480,12 +484,16 @@ public class Model {
                         appointments.add(appointment);
                     }
                 }
+            } else {
+                System.err.println("Врач с username '" + username + "' не найден в таблице связей");
             }
         } catch (SQLException e) {
-            System.err.println("Ошибка при получении расписания врача: " + e.getMessage());
+            System.err.println("Ошибка при получении расписания врача (новый метод): " + e.getMessage());
+            e.printStackTrace();
         }
         return appointments;
     }
+
 
     // Завершение приема
     public boolean completeAppointment(int appointmentId) {
@@ -613,5 +621,139 @@ public class Model {
             System.err.println("Ошибка при получении сообщений диалога: " + e.getMessage());
         }
         return messages;
+    }
+
+    // НОВЫЙ МЕТОД для получения расписания врача с исправленным запросом
+    public List<Appointment> getDoctorScheduleFixed(String username) {
+        List<Appointment> appointments = new ArrayList<>();
+
+        // Исправленный запрос: находим врача по username пользователя
+        String doctorIdQuery = "SELECT d.id FROM doctors d " +
+                "JOIN users u ON d.name = (SELECT name FROM users WHERE username = ? AND user_type = 'DOCTOR' LIMIT 1)";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(doctorIdQuery)) {
+
+            pstmt.setString(1, username);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                int doctorId = rs.getInt("id");
+
+                // Получаем расписание для этого врача
+                String sql = "SELECT a.*, d.name as doctor_name " +
+                        "FROM appointments a " +
+                        "JOIN doctors d ON a.doctor_id = d.id " +
+                        "WHERE a.doctor_id = ? " +
+                        "AND a.appointment_date >= date('now') " +
+                        "ORDER BY a.appointment_date, a.start_time";
+
+                try (PreparedStatement scheduleStmt = conn.prepareStatement(sql)) {
+                    scheduleStmt.setInt(1, doctorId);
+                    ResultSet scheduleRs = scheduleStmt.executeQuery();
+
+                    while (scheduleRs.next()) {
+                        Appointment appointment = new Appointment(
+                                scheduleRs.getInt("id"),
+                                scheduleRs.getString("patient_username"),
+                                scheduleRs.getInt("doctor_id"),
+                                scheduleRs.getString("appointment_date"),
+                                scheduleRs.getString("start_time"),
+                                scheduleRs.getString("end_time"),
+                                scheduleRs.getString("secret_id"),
+                                scheduleRs.getString("status"),
+                                scheduleRs.getString("doctor_name")
+                        );
+                        appointments.add(appointment);
+                    }
+                }
+            } else {
+                System.err.println("Врач не найден для username: " + username);
+            }
+        } catch (SQLException e) {
+            System.err.println("Ошибка при получении расписания врача: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return appointments;
+    }
+    // Альтернативный метод для получения расписания врача (без изменения структуры БД)
+    public List<Appointment> getDoctorScheduleByUsername(String username) {
+        List<Appointment> appointments = new ArrayList<>();
+
+        System.out.println("[DEBUG] Поиск расписания для пользователя: " + username);
+
+        // Запрос через связь users.name -> doctors.name
+        String sql = "SELECT a.*, d.name as doctor_name " +
+                "FROM appointments a " +
+                "JOIN doctors d ON a.doctor_id = d.id " +
+                "WHERE d.name = (SELECT name FROM users WHERE username = ? AND user_type = 'DOCTOR') " +
+                "ORDER BY a.appointment_date, a.start_time";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, username);
+            ResultSet rs = pstmt.executeQuery();
+
+            int count = 0;
+            while (rs.next()) {
+                Appointment appointment = new Appointment(
+                        rs.getInt("id"),
+                        rs.getString("patient_username"),
+                        rs.getInt("doctor_id"),
+                        rs.getString("appointment_date"),
+                        rs.getString("start_time"),
+                        rs.getString("end_time"),
+                        rs.getString("secret_id"),
+                        rs.getString("status"),
+                        rs.getString("doctor_name")
+                );
+                appointments.add(appointment);
+                count++;
+            }
+
+            System.out.println("[DEBUG] Найдено записей: " + count);
+
+        } catch (SQLException e) {
+            System.err.println("Ошибка при получении расписания врача: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return appointments;
+    }
+    // Метод для проверки связи между users и doctors
+    public Map<String, String> checkDoctorData(String username) {
+        Map<String, String> result = new HashMap<>();
+
+        String sql = "SELECT u.username, u.name as user_name, u.user_type, " +
+                "d.id as doctor_id, d.name as doctor_name " +
+                "FROM users u " +
+                "LEFT JOIN doctors d ON u.name = d.name " +
+                "WHERE u.username = ? AND u.user_type = 'DOCTOR'";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, username);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                result.put("user_exists", "true");
+                result.put("username", rs.getString("username"));
+                result.put("user_name", rs.getString("user_name"));
+                result.put("user_type", rs.getString("user_type"));
+                result.put("doctor_id", String.valueOf(rs.getInt("doctor_id")));
+                result.put("doctor_name", rs.getString("doctor_name"));
+                result.put("match", rs.getString("user_name") != null &&
+                        rs.getString("user_name").equals(rs.getString("doctor_name")) ? "true" : "false");
+            } else {
+                result.put("user_exists", "false");
+            }
+
+        } catch (SQLException e) {
+            result.put("error", e.getMessage());
+        }
+
+        return result;
     }
 }
