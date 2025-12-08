@@ -32,7 +32,8 @@ public class MessageAdapter extends ArrayAdapter<Message> {
     public int getItemViewType(int position) {
         Message msg = getItem(position);
         if (msg == null) return VIEW_TYPE_INCOMING;
-        return msg.getSenderUsername().equals(currentUsername) ?
+        String sender = msg.getSenderUsername();
+        return (sender != null && sender.equals(currentUsername)) ?
                 VIEW_TYPE_OUTGOING : VIEW_TYPE_INCOMING;
     }
 
